@@ -1,18 +1,21 @@
 package com.secure.jobs.services.iml;
 
-import com.secure.jobs.dto.CreateJobRequest;
-import com.secure.jobs.dto.JobPageResponse;
-import com.secure.jobs.dto.JobResponse;
-import com.secure.jobs.dto.UpdateJobRequest;
+import com.secure.jobs.dto.job.CreateJobRequest;
+import com.secure.jobs.dto.job.JobPageResponse;
+import com.secure.jobs.dto.job.JobResponse;
+import com.secure.jobs.dto.job.UpdateJobRequest;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.JobMapper;
-import com.secure.jobs.models.*;
+import com.secure.jobs.models.company.Company;
+import com.secure.jobs.models.job.*;
 import com.secure.jobs.repositories.CompanyRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.services.JobService;
 import com.secure.jobs.specifications.JobSpecifications;
+import com.secure.jobs.validation.JobPayValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -30,47 +33,7 @@ public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
-
-    private void validatePay(BigDecimal payMin, BigDecimal payMax, PayType payType, PayPeriod payPeriod) {
-        boolean hasAnyPayField = payMin != null || payMax != null || payType != null || payPeriod != null;
-
-        // If they provided none of the pay fields, ok
-        if (!hasAnyPayField) return;
-
-        // If they provided any pay fields, require type + period
-        if (payType == null || payPeriod == null) {
-            throw new BadRequestException("payType and payPeriod are required when providing pay info.");
-        }
-
-        // Optional: require at least one amount
-        if (payMin == null && payMax == null) {
-            throw new BadRequestException("Provide payMin and/or payMax when payType/payPeriod are provided.");
-        }
-
-        if (payMin != null && payMin.signum() < 0) throw new BadRequestException("payMin cannot be negative.");
-        if (payMax != null && payMax.signum() < 0) throw new BadRequestException("payMax cannot be negative.");
-        if (payMin != null && payMax != null && payMax.compareTo(payMin) < 0) {
-            throw new BadRequestException("payMax must be >= payMin.");
-        }
-
-        if (payPeriod == PayPeriod.HOUR && payType != PayType.HOURLY) {
-            throw new BadRequestException("If payPeriod is HOUR, payType must be HOURLY.");
-        }
-        if (payType == PayType.SALARY && payPeriod == PayPeriod.HOUR) {
-            throw new BadRequestException("Salary cannot have payPeriod=HOUR.");
-        }
-    }
-
-
-    private void validatePayForUpdate(Job job, UpdateJobRequest req) {
-        BigDecimal payMin   = (req.payMin()   != null) ? req.payMin()   : job.getPayMin();
-        BigDecimal payMax   = (req.payMax()   != null) ? req.payMax()   : job.getPayMax();
-        PayType payType     = (req.payType()  != null) ? req.payType()  : job.getPayType();
-        PayPeriod payPeriod = (req.payPeriod()!= null) ? req.payPeriod(): job.getPayPeriod();
-
-        validatePay(payMin, payMax, payType, payPeriod);
-    }
-
+    private final JobPayValidator jobPayValidator;
 
 
     @Override
@@ -78,7 +41,7 @@ public class JobServiceImpl implements JobService {
         Company company =  companyRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User is not a company"));
 
-        validatePay(request.payMin(), request.payMax(), request.payType(), request.payPeriod());
+        jobPayValidator.validate(request.payMin(), request.payMax(), request.payType(), request.payPeriod());
         Job job = JobMapper.toEntity(request, company);
         job.setStatus(JobStatus.DRAFT);
 
@@ -86,8 +49,26 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job updateJob(Long userId, Long jobId, UpdateJobRequest request) {
-        return null;
+    public Job updateJob(Long userId, Long jobId, UpdateJobRequest request){
+
+        // 1️⃣ Load job (with company)
+        Job job = jobRepository.findByIdWithCompany(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+
+        // 2️⃣ Authorization: must own the company
+        if (!job.getCompany().getOwner().getUserId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to update this job");
+        }
+
+        // 3️⃣ Validate pay (merge existing + incoming)
+        jobPayValidator.validateForUpdate(job, request);
+
+        // 4️⃣ Apply updates
+        JobMapper.updateEntity(job, request);
+
+        // 5️⃣ Save and return
+        return jobRepository.save(job);
+
     }
 
     @Override
@@ -108,10 +89,7 @@ public class JobServiceImpl implements JobService {
                 .toList();
     }
 
-    @Override
-    public Job getJobById(Long jobId) {
-        return null;
-    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -198,5 +176,20 @@ public class JobServiceImpl implements JobService {
         );
 
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JobResponse getPublishedJobById(Long jobId) {
+
+        Job job = jobRepository.findByIdWithCompany(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+
+        if (job.getStatus() != JobStatus.PUBLISHED) {
+            throw new ResourceNotFoundException("Job not found");
+            // 👆 intentional: do NOT leak draft jobs
+        }
+
+        return JobMapper.toResponse(job);
     }
 }

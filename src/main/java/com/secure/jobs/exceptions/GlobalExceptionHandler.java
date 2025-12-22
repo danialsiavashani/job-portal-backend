@@ -67,7 +67,10 @@ public class GlobalExceptionHandler {
                 || ex instanceof org.springframework.security.core.AuthenticationException) {
             throw ex;
         }
-//            ex.printStackTrace(); dev logs
+
+        // dev logs
+//            ex.printStackTrace();
+
         ApiError error = new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

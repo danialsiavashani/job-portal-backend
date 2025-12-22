@@ -1,4 +1,4 @@
-package com.secure.jobs.dto;
+package com.secure.jobs.dto.job;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

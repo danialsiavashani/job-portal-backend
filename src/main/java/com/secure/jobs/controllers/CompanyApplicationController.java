@@ -1,13 +1,12 @@
 package com.secure.jobs.controllers;
 
-import com.secure.jobs.auth.dto.CompanyApplicationRequest;
-import com.secure.jobs.auth.dto.CompanyApplicationResponse;
+import com.secure.jobs.dto.company.CompanyApplicationRequest;
+import com.secure.jobs.dto.company.CompanyApplicationResponse;
 import com.secure.jobs.mappers.CompanyApplicationMapper;
-import com.secure.jobs.models.CompanyApplication;
+import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.CompanyApplicationService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

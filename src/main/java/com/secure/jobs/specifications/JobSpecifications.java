@@ -1,6 +1,8 @@
 package com.secure.jobs.specifications;
 
-import com.secure.jobs.models.*;
+import com.secure.jobs.models.job.EmploymentType;
+import com.secure.jobs.models.job.Job;
+import com.secure.jobs.models.job.JobStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;

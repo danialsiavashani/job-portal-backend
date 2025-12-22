@@ -1,7 +1,7 @@
 package com.secure.jobs.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.secure.jobs.models.User;
+import com.secure.jobs.models.auth.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

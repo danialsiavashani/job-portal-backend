@@ -1,9 +1,9 @@
-package com.secure.jobs.dto;
+package com.secure.jobs.dto.job;
 
-import com.secure.jobs.models.EmploymentType;
-import com.secure.jobs.models.JobStatus;
-import com.secure.jobs.models.PayPeriod;
-import com.secure.jobs.models.PayType;
+import com.secure.jobs.models.job.EmploymentType;
+import com.secure.jobs.models.job.JobStatus;
+import com.secure.jobs.models.job.PayPeriod;
+import com.secure.jobs.models.job.PayType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

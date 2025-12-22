@@ -1,7 +1,7 @@
 package com.secure.jobs.mappers;
 
-import com.secure.jobs.auth.dto.CompanyApplicationResponse;
-import com.secure.jobs.models.CompanyApplication;
+import com.secure.jobs.dto.company.CompanyApplicationResponse;
+import com.secure.jobs.models.company.CompanyApplication;
 
 public class CompanyApplicationMapper {
 

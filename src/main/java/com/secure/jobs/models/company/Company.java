@@ -1,5 +1,6 @@
-package com.secure.jobs.models;
+package com.secure.jobs.models.company;
 
+import com.secure.jobs.models.auth.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

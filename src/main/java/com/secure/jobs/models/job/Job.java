@@ -1,5 +1,6 @@
-package com.secure.jobs.models;
+package com.secure.jobs.models.job;
 
+import com.secure.jobs.models.company.Company;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;

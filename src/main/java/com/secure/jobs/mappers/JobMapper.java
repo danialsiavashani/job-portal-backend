@@ -1,12 +1,10 @@
 package com.secure.jobs.mappers;
 
-import com.secure.jobs.dto.CreateJobRequest;
-import com.secure.jobs.dto.JobResponse;
-import com.secure.jobs.dto.UpdateJobRequest;
-import com.secure.jobs.models.Company;
-import com.secure.jobs.models.Job;
-
-import java.util.ArrayList;
+import com.secure.jobs.dto.job.CreateJobRequest;
+import com.secure.jobs.dto.job.JobResponse;
+import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.models.company.Company;
+import com.secure.jobs.models.job.Job;
 
 public class JobMapper {
 

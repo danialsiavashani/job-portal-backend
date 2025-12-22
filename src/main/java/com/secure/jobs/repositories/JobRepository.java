@@ -1,7 +1,7 @@
 package com.secure.jobs.repositories;
 
-import com.secure.jobs.models.Job;
-import com.secure.jobs.models.JobStatus;
+import com.secure.jobs.models.job.Job;
+import com.secure.jobs.models.job.JobStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

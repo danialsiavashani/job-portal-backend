@@ -1,4 +1,4 @@
-package com.secure.jobs.auth.dto;
+package com.secure.jobs.dto.company;
 
 import java.time.LocalDateTime;
 

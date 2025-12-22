@@ -2,7 +2,12 @@ package com.secure.jobs.services.iml;
 
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
-import com.secure.jobs.models.*;
+import com.secure.jobs.models.auth.AppRole;
+import com.secure.jobs.models.auth.Role;
+import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.company.Company;
+import com.secure.jobs.models.company.CompanyApplication;
+import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.repositories.CompanyApplicationRepository;
 import com.secure.jobs.repositories.CompanyRepository;
 import com.secure.jobs.repositories.RoleRepository;

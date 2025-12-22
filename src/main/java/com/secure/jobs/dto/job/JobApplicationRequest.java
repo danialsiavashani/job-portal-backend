@@ -1,9 +1,8 @@
-package com.secure.jobs.auth.dto;
+package com.secure.jobs.dto.job;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record CompanyApplicationRequest(
-        @NotBlank String companyName,
+public record JobApplicationRequest(
         @NotBlank String documentPublicId,
         @NotBlank String documentUrl
 ) {}

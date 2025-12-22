@@ -1,7 +1,7 @@
 package com.secure.jobs.repositories;
 
-import com.secure.jobs.models.AppRole;
-import com.secure.jobs.models.Role;
+import com.secure.jobs.models.auth.AppRole;
+import com.secure.jobs.models.auth.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

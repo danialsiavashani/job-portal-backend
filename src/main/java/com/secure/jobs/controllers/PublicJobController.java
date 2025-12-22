@@ -1,16 +1,12 @@
 package com.secure.jobs.controllers;
 
-import com.secure.jobs.dto.JobPageResponse;
-import com.secure.jobs.models.EmploymentType;
+import com.secure.jobs.dto.job.JobPageResponse;
+import com.secure.jobs.dto.job.JobResponse;
+import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.services.JobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Pageable;
 
@@ -18,7 +14,7 @@ import java.math.BigDecimal;
 
 
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping("/api/public/jobs")
 @RequiredArgsConstructor
 public class PublicJobController {
 
@@ -45,5 +41,10 @@ public class PublicJobController {
                 maxPay,
                 companyId
         );
+    }
+
+    @GetMapping("/{jobId}")
+    public JobResponse getPublishedJobById(@PathVariable Long jobId) {
+        return jobService.getPublishedJobById(jobId);
     }
 }

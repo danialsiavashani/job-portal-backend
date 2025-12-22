@@ -1,4 +1,4 @@
-package com.secure.jobs.models;
+package com.secure.jobs.models.auth;
 
 public enum AppRole {
     ROLE_USER,

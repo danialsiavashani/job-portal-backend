@@ -1,6 +1,6 @@
 package com.secure.jobs.services;
 
-import com.secure.jobs.models.CompanyApplication;
+import com.secure.jobs.models.company.CompanyApplication;
 
 public interface CompanyApplicationService {
     CompanyApplication apply(Long userId, String companyName, String documentPublicId, String documentUrl);

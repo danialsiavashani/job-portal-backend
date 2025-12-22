@@ -1,8 +1,8 @@
 package com.secure.jobs.config;
 
-import com.secure.jobs.models.AppRole;
-import com.secure.jobs.models.Role;
-import com.secure.jobs.models.User;
+import com.secure.jobs.models.auth.AppRole;
+import com.secure.jobs.models.auth.Role;
+import com.secure.jobs.models.auth.User;
 import com.secure.jobs.repositories.RoleRepository;
 import com.secure.jobs.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;

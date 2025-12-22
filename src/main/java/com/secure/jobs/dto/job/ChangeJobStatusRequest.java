@@ -1,6 +1,6 @@
-package com.secure.jobs.dto;
+package com.secure.jobs.dto.job;
 
-import com.secure.jobs.models.JobStatus;
+import com.secure.jobs.models.job.JobStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record ChangeJobStatusRequest(

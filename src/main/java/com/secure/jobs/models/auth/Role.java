@@ -1,6 +1,5 @@
-package com.secure.jobs.models;
+package com.secure.jobs.models.auth;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

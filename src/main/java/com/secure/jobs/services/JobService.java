@@ -1,13 +1,13 @@
 package com.secure.jobs.services;
 
-import com.secure.jobs.dto.CreateJobRequest;
-import com.secure.jobs.dto.JobPageResponse;
-import com.secure.jobs.dto.JobResponse;
-import com.secure.jobs.dto.UpdateJobRequest;
-import com.secure.jobs.models.EmploymentType;
-import com.secure.jobs.models.Job;
+import com.secure.jobs.dto.job.CreateJobRequest;
+import com.secure.jobs.dto.job.JobPageResponse;
+import com.secure.jobs.dto.job.JobResponse;
+import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.models.job.EmploymentType;
+import com.secure.jobs.models.job.Job;
 
-import com.secure.jobs.models.JobStatus;
+import com.secure.jobs.models.job.JobStatus;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 
@@ -23,8 +23,7 @@ public interface JobService {
     void deleteJob(Long userId, Long jobId);
 
     List<JobResponse> getJobsForCompany(Long userId);
-
-    Job getJobById(Long jobId);
+    
 
     JobPageResponse getPublishedJobs(
             Pageable pageable,
@@ -37,5 +36,7 @@ public interface JobService {
     );
 
     void changeStatus(Long userId, Long jobId, @NotNull JobStatus status);
+
+    JobResponse getPublishedJobById(Long jobId);
 }
 
