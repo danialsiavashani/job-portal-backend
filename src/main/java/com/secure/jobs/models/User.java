@@ -85,6 +85,13 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedDate;
 
+    // Resume (Cloudinary)
+    @Column(name = "resume_public_id")
+    private String resumePublicId;
+
+    @Column(name = "resume_url", length = 500)
+    private String resumeUrl;
+
     // equals/hashCode safe for Hibernate
     @Override
     public boolean equals(Object o) {
@@ -92,6 +99,7 @@ public class User {
         if (!(o instanceof User other)) return false;
         return userId != null && userId.equals(other.userId);
     }
+
 
     @Override
     public int hashCode() {
