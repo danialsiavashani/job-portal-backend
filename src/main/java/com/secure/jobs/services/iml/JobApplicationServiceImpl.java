@@ -1,8 +1,10 @@
 package com.secure.jobs.services.iml;
 
 import com.secure.jobs.dto.job.JobApplicationRequest;
+import com.secure.jobs.dto.job.JobApplicationResponse;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.JobApplicationMapper;
 import com.secure.jobs.models.auth.User;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobApplication;
@@ -12,9 +14,12 @@ import com.secure.jobs.repositories.JobApplicationRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.services.JobApplicationService;
+import com.secure.jobs.validation.ValidateCompanyOwnership;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private final JobApplicationRepository jobApplicationRepository;
+    private final ValidateCompanyOwnership validateOwnership;
 
     @Override
     public JobApplication apply(Long userId, Long jobId, JobApplicationRequest request) {
@@ -55,6 +61,47 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
                 .documentUrl(request.documentUrl())
                 .build();
 
+        job.incrementApplicants();
+
         return jobApplicationRepository.save(app);
     }
+
+    @Override
+    @Transactional
+    public void moveToInterview(Long applicationId, Long companyUserId) {
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        validateOwnership.validateCompanyOwnership(application, companyUserId);
+
+        if (application.getStatus() != JobApplicationStatus.PENDING) {
+            throw new BadRequestException("Application is already processed");
+        }
+        application.setStatus(JobApplicationStatus.INTERVIEW);
+    }
+
+    @Override
+    @Transactional
+    public void reject(Long applicationId, Long companyUserId) {
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        validateOwnership.validateCompanyOwnership(application, companyUserId);
+
+        if (application.getStatus() != JobApplicationStatus.PENDING) {
+            throw new BadRequestException("Application is already processed");
+        }
+
+        application.setStatus(JobApplicationStatus.REJECTED);
+    }
+
+    @Transactional(readOnly = true)
+    public List<JobApplicationResponse> getMyApplications(Long userId) {
+
+        return jobApplicationRepository.findAllByUser_UserId(userId)
+                .stream()
+                .map(JobApplicationMapper::toResponse)
+                .toList();
+    }
+
 }

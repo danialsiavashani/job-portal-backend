@@ -40,6 +40,9 @@ public class Job {
     @Column(nullable = false)
     private EmploymentType employmentType;
 
+    @Column(nullable = false)
+    private int numberOfApplicants = 0;
+
     private String level;
 
     private String location;
@@ -78,6 +81,11 @@ public class Job {
     @Column(name = "requirement")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<String> minimumRequirements = new ArrayList<>();
+
+    public void incrementApplicants() {
+        this.numberOfApplicants++;
+    }
+
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

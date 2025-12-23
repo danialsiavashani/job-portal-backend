@@ -2,6 +2,7 @@ package com.secure.jobs.controllers;
 
 import com.secure.jobs.dto.company.CompanyApplicationRequest;
 import com.secure.jobs.dto.company.CompanyApplicationResponse;
+import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.mappers.CompanyApplicationMapper;
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.security.services.UserDetailsImpl;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/company-applications")
@@ -49,14 +52,24 @@ public class CompanyApplicationController {
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public CompanyApplication approve(@PathVariable Long id) {
+    public CompanyApplicationResponse approve(@PathVariable Long id) {
         return companyApplicationService.approve(id);
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public CompanyApplication reject(@PathVariable Long id) {
+    public CompanyApplicationResponse reject(@PathVariable Long id) {
         return companyApplicationService.reject(id, null);
     }
 
+    @GetMapping("/list")
+    @PreAuthorize("hasRole('COMPANY')")
+    public List<CompanyJobApplicationRowResponse> list(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(defaultValue = "PENDING") String status
+    ) {
+        return companyApplicationService.getCompanyApplications(userDetails.getId(), status);
+    }
+
 }
+

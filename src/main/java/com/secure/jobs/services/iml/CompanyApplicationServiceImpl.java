@@ -1,27 +1,34 @@
 package com.secure.jobs.services.iml;
 
+import com.secure.jobs.dto.company.CompanyApplicationResponse;
+import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.CompanyApplicationMapper;
+import com.secure.jobs.mappers.CompanyJobApplicationMapper;
 import com.secure.jobs.models.auth.AppRole;
 import com.secure.jobs.models.auth.Role;
 import com.secure.jobs.models.auth.User;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
-import com.secure.jobs.repositories.CompanyApplicationRepository;
-import com.secure.jobs.repositories.CompanyRepository;
-import com.secure.jobs.repositories.RoleRepository;
-import com.secure.jobs.repositories.UserRepository;
+import com.secure.jobs.models.job.JobApplication;
+import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.repositories.*;
 import com.secure.jobs.services.CompanyApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CompanyApplicationServiceImpl implements CompanyApplicationService {
 
     private final CompanyApplicationRepository companyApplicationRepository;
+    private final JobApplicationRepository jobApplicationRepository;
+    private final CompanyJobApplicationMapper companyJobApplicationMapper;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -37,15 +44,30 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (companyApplicationRepository.existsByUserAndStatus(
-                user,
-                CompanyApplicationStatus.PENDING
-        )) {
-            throw new BadRequestException(
-                    "You already have a pending company application"
-            );
+        CompanyApplication existing =
+                companyApplicationRepository.findByUser_UserId(userId).orElse(null);
+
+        // If user already has an application row (because user_id is UNIQUE)
+        if (existing != null) {
+
+            if (existing.getStatus() == CompanyApplicationStatus.PENDING) {
+                throw new BadRequestException("You already have a pending company application");
+            }
+
+            if (existing.getStatus() == CompanyApplicationStatus.APPROVED) {
+                throw new BadRequestException("Your company application is already approved");
+            }
+
+            // REJECTED -> reset and reuse the SAME row
+            existing.setCompanyName(companyName);
+            existing.setDocumentPublicId(documentPublicId);
+            existing.setDocumentUrl(documentUrl);
+            existing.setStatus(CompanyApplicationStatus.PENDING);
+
+            return companyApplicationRepository.save(existing);
         }
 
+        // First-time apply -> create a new row
         CompanyApplication application = CompanyApplication.builder()
                 .user(user)
                 .companyName(companyName)
@@ -58,9 +80,10 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
     }
 
 
+
     @Override
     @Transactional
-    public CompanyApplication approve(Long applicationId) {
+    public CompanyApplicationResponse approve(Long applicationId) {
 
         CompanyApplication application = companyApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Company application not found"));
@@ -89,12 +112,13 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
         // Update application status
         application.setStatus(CompanyApplicationStatus.APPROVED);
-        return companyApplicationRepository.save(application);
+        companyApplicationRepository.save(application);
+        return CompanyApplicationMapper.toResponse(application);
     }
 
     @Override
     @Transactional
-    public CompanyApplication reject(Long applicationId, String reason) {
+    public CompanyApplicationResponse reject(Long applicationId, String reason) {
 
         CompanyApplication application = companyApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Company application not found"));
@@ -106,8 +130,9 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
         application.setStatus(CompanyApplicationStatus.REJECTED);
 
-        // optional: store reason later
-        return companyApplicationRepository.save(application);
+        companyApplicationRepository.save(application);
+
+        return CompanyApplicationMapper.toResponse(application);
     }
 
     @Override
@@ -122,4 +147,37 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
                         "No company application found for this user"
                 ));
     }
-}
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CompanyJobApplicationRowResponse> getCompanyApplications(Long companyUserId, String statusParam) {
+        Company company = companyRepository.findByOwner_UserId(companyUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found for user"));
+
+        Long companyId = company.getId();
+
+        String normalized = (statusParam == null ? "PENDING" : statusParam.trim().toUpperCase());
+
+        List<JobApplication> apps;
+
+        if ("ALL".equals(normalized)) {
+            apps = jobApplicationRepository.findAllByCompany_IdOrderByCreatedAtDesc(companyId);
+        } else {
+            JobApplicationStatus status;
+            try {
+                status = JobApplicationStatus.valueOf(normalized);
+            } catch (IllegalArgumentException ex) {
+                throw new BadRequestException("Invalid status. Use ALL, PENDING, INTERVIEW, or REJECTED.");
+            }
+            apps = jobApplicationRepository.findAllByCompany_IdAndStatusOrderByCreatedAtDesc(companyId, status);
+        }
+
+        return apps.stream()
+                .map(companyJobApplicationMapper::toRow)
+                .toList();
+    }
+
+    }
+
+
+

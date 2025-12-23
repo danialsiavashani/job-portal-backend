@@ -12,4 +12,6 @@ import java.util.Optional;
 public interface CompanyApplicationRepository extends JpaRepository<CompanyApplication, Long> {
     boolean existsByUserAndStatus(User user, CompanyApplicationStatus companyApplicationStatus);
     Optional<CompanyApplication> findByUser(User user);
+    Optional<CompanyApplication> findByUser_UserId(Long userId);
+
 }
