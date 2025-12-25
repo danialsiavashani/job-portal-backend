@@ -7,6 +7,7 @@ import com.secure.jobs.dto.job.UpdateJobRequest;
 import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.models.job.Job;
 
+import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.models.job.JobStatus;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
@@ -22,9 +23,6 @@ public interface JobService {
 
     void deleteJob(Long userId, Long jobId);
 
-    List<JobResponse> getJobsForCompany(Long userId);
-    
-
     JobPageResponse getPublishedJobs(
             Pageable pageable,
             String keyword,
@@ -33,6 +31,17 @@ public interface JobService {
             BigDecimal minPay,
             BigDecimal maxPay,
             Long companyId
+    );
+
+    JobPageResponse getJobsForCompany(
+            Long userId,
+            Pageable pageable,
+            String keyword,
+            EmploymentType employmentType,
+            JobStatus status,
+            String location,
+            BigDecimal minPay,
+            BigDecimal maxPay
     );
 
     void changeStatus(Long userId, Long jobId, @NotNull JobStatus status);

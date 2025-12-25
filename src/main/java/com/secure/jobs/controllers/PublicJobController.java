@@ -47,4 +47,5 @@ public class PublicJobController {
     public JobResponse getPublishedJobById(@PathVariable Long jobId) {
         return jobService.getPublishedJobById(jobId);
     }
+
 }

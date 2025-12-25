@@ -3,6 +3,8 @@ package com.secure.jobs.repositories;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -36,25 +38,7 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
     """)
     Optional<Job> findByIdWithCompany(Long id);
 
-    // =========================
-    // Public job feed
-    // =========================
-    @Query("""
-        SELECT j FROM Job j
-        JOIN FETCH j.company
-        WHERE j.status = :status
-        ORDER BY j.createdAt DESC
-    """)
-    List<Job> findByStatusWithCompany(JobStatus status);
-
-    @Query("""
-    SELECT j FROM Job j
-    JOIN FETCH j.company
-    WHERE j.status = :status
-""")
-    Page<Job> findByStatusWithCompany(
-            JobStatus status,
-            Pageable pageable
-    );
+    @EntityGraph(attributePaths = {"company"})
+    Page<Job> findAll(Specification<Job> spec, Pageable pageable);
 
 }

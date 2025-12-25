@@ -28,8 +28,8 @@ public class CompanyApplication {
      * The user applying to become a company.
      * A user can have only ONE active company application.
      */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Column(name = "company_name", nullable = false, length = 150)

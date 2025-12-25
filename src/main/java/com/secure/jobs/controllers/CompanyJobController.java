@@ -1,20 +1,23 @@
 package com.secure.jobs.controllers;
 
-import com.secure.jobs.dto.job.ChangeJobStatusRequest;
-import com.secure.jobs.dto.job.CreateJobRequest;
-import com.secure.jobs.dto.job.JobResponse;
-import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.dto.job.*;
 import com.secure.jobs.mappers.JobMapper;
+import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.models.job.Job;
+import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.job.JobStatus;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -57,11 +60,31 @@ public class CompanyJobController {
 
     @GetMapping
     @PreAuthorize("hasRole('COMPANY')")
-    public List<JobResponse> getMyJobs(
-            @AuthenticationPrincipal UserDetailsImpl user
+    public JobPageResponse getMyJobs(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) EmploymentType employmentType,
+            @RequestParam(required = false) JobStatus status,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) BigDecimal minPay,
+            @RequestParam(required = false) BigDecimal maxPay
     ) {
-        return jobService.getJobsForCompany(user.getId());
+        Pageable pageable = PageRequest.of(page, size);
+        return jobService.getJobsForCompany(
+                user.getId(),
+                pageable,
+                keyword,
+                employmentType,
+                status,
+                location,
+                minPay,
+                maxPay
+        );
     }
+
+
 
 
 }

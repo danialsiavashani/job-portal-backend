@@ -4,6 +4,7 @@ import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.models.auth.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -14,4 +15,6 @@ public interface CompanyApplicationRepository extends JpaRepository<CompanyAppli
     Optional<CompanyApplication> findByUser(User user);
     Optional<CompanyApplication> findByUser_UserId(Long userId);
 
+    @Query("select ca.status from CompanyApplication ca where ca.user.userId = :id")
+    Optional<CompanyApplicationStatus> findStatusByUserId(Long id);
 }

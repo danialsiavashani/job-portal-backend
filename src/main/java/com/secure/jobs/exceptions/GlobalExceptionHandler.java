@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
         }
 
         // dev logs
-//            ex.printStackTrace();
+           ex.printStackTrace();
 
         ApiError error = new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

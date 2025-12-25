@@ -24,18 +24,18 @@ public class CompanyApplicationController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public CompanyApplication apply(
+    public CompanyApplicationResponse apply(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody @Valid CompanyApplicationRequest request
     ) {
         Long userId = userDetails.getId();
-
-        return companyApplicationService.apply(
+        CompanyApplication app = companyApplicationService.apply(
                 userId,
                 request.companyName(),
                 request.documentPublicId(),
                 request.documentUrl()
         );
+        return  CompanyApplicationMapper.toResponse(app);
     }
 
     @GetMapping("/me")

@@ -1,5 +1,6 @@
 package com.secure.jobs.services.iml;
 
+import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationRequest;
 import com.secure.jobs.dto.job.JobApplicationResponse;
 import com.secure.jobs.exceptions.BadRequestException;
@@ -14,7 +15,12 @@ import com.secure.jobs.repositories.JobApplicationRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.services.JobApplicationService;
+import com.secure.jobs.specifications.JobSpecifications;
+import com.secure.jobs.specifications.UserJobsApplicationsSpecifications;
 import com.secure.jobs.validation.ValidateCompanyOwnership;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -95,13 +101,39 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
         application.setStatus(JobApplicationStatus.REJECTED);
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public List<JobApplicationResponse> getMyApplications(Long userId) {
+    public JobApplicationPageResponse getMyApplications(Long userId, Pageable pageable,
+                                                              String keyword, JobApplicationStatus status) {
 
-        return jobApplicationRepository.findAllByUser_UserId(userId)
+        Specification<JobApplication> spec =
+                Specification.where(UserJobsApplicationsSpecifications.belongsToUser(userId))
+                        .and(UserJobsApplicationsSpecifications.keyword(keyword));
+
+        if (status != null) {
+            spec = spec.and(UserJobsApplicationsSpecifications.hasApplicationStatus(status));
+        }
+
+        Page<JobApplication> page = jobApplicationRepository.findAll(
+                spec,
+                pageable
+        );
+
+        List<JobApplicationResponse> jobApplications = page.getContent()
                 .stream()
                 .map(JobApplicationMapper::toResponse)
                 .toList();
+
+
+
+        return new JobApplicationPageResponse(
+                jobApplications,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
 }

@@ -12,6 +12,7 @@ import com.secure.jobs.models.job.*;
 import com.secure.jobs.repositories.CompanyRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.services.JobService;
+import com.secure.jobs.specifications.CompanyJobsSpecifications;
 import com.secure.jobs.specifications.JobSpecifications;
 import com.secure.jobs.validation.JobPayValidator;
 import lombok.RequiredArgsConstructor;
@@ -78,15 +79,64 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<JobResponse> getJobsForCompany(Long userId) {
+    public JobPageResponse getJobsForCompany(
+            Long userId,
+            Pageable pageable,
+            String keyword,
+            EmploymentType employmentType,
+            JobStatus status,
+            String location,
+            BigDecimal minPay,
+            BigDecimal maxPay
+    ) {
 
         Company company = companyRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User is not a company"));
+        Specification<Job> spec =
+                Specification.where(CompanyJobsSpecifications.belongsToCompany(company.getId()));
 
-        return jobRepository.findByCompanyIdWithCompany(company.getId())
+        if (keyword != null) {
+            spec = spec.and(CompanyJobsSpecifications.keyword(keyword));
+        }
+
+        if (employmentType != null) {
+            spec = spec.and(CompanyJobsSpecifications.hasEmploymentType(employmentType));
+        }
+
+        if (status != null) {
+            spec = spec.and(CompanyJobsSpecifications.hasJobStatus(status));
+        }
+
+        if (location != null) {
+            spec = spec.and(CompanyJobsSpecifications.hasLocation(location));
+        }
+
+        if (minPay != null) {
+            spec = spec.and(CompanyJobsSpecifications.payMinAtLeast(minPay));
+        }
+
+        if (maxPay != null) {
+            spec = spec.and(CompanyJobsSpecifications.payMaxAtMost(maxPay));
+        }
+
+        Page<Job> page = jobRepository.findAll(
+                spec,
+                pageable
+        );
+
+        List<JobResponse> jobs = page.getContent()
                 .stream()
                 .map(JobMapper::toResponse)
                 .toList();
+
+        return new JobPageResponse(
+                jobs,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
 
