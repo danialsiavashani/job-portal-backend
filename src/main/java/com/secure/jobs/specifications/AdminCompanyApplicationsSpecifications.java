@@ -1,22 +1,20 @@
 package com.secure.jobs.specifications;
 
-
-import com.secure.jobs.models.job.JobApplication;
-import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.auth.AppRole;
+import com.secure.jobs.models.auth.Role;
+import com.secure.jobs.models.company.CompanyApplication;
+import com.secure.jobs.models.company.CompanyApplicationStatus;
 import jakarta.persistence.criteria.Path;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class UserJobsApplicationsSpecifications {
+public class AdminCompanyApplicationsSpecifications {
 
-    public static Specification<JobApplication> belongsToUser(Long userId) {
-        return (root, query, cb) ->
-                cb.equal(root.get("user").get("userId"), userId);
-    }
 
-    public static Specification<JobApplication> createdBetween(LocalDate from, LocalDate to) {
+    public static Specification<CompanyApplication> createdBetween(LocalDate from, LocalDate to) {
         return (root, query, cb) -> {
             if (from == null && to == null) return cb.conjunction();
 
@@ -41,25 +39,22 @@ public class UserJobsApplicationsSpecifications {
     }
 
 
-    public static Specification<JobApplication> hasApplicationStatus(JobApplicationStatus status) {
+    public static Specification<CompanyApplication> hasApplicationStatus(CompanyApplicationStatus status) {
         return (root, query, cb) ->
                 cb.equal(root.get("status"), status);
     }
 
-    public static Specification<JobApplication> keyword(String keyword) {
+
+    public static Specification<CompanyApplication> keyword(String keyword) {
         return (root, query, cb) -> {
             if (keyword == null || keyword.isBlank()) return cb.conjunction();
 
             String like = "%" + keyword.toLowerCase() + "%";
 
-            var companyJoin = root.join("company");
-            var locationJoin = root.join("job");
-            var titleJoin = root.join("job");
+            var user = root.join("user");
 
             return cb.or(
-                    cb.like(cb.lower(companyJoin.get("name")), like),
-                    cb.like(cb.lower(locationJoin.get("location")), like),
-                    cb.like(cb.lower(titleJoin.get("title")), like)
+                    cb.like(cb.lower(user.get("email")), like)
             );
         };
     }

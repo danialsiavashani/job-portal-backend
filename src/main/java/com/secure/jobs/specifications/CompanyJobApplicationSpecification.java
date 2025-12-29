@@ -1,6 +1,5 @@
 package com.secure.jobs.specifications;
 
-
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import jakarta.persistence.criteria.Path;
@@ -9,11 +8,22 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class UserJobsApplicationsSpecifications {
+public class CompanyJobApplicationSpecification {
 
-    public static Specification<JobApplication> belongsToUser(Long userId) {
-        return (root, query, cb) ->
-                cb.equal(root.get("user").get("userId"), userId);
+    public static Specification<JobApplication> belongsToCompany(Long companyUserId) {
+        return (root, query, cb) -> {
+            var job = root.join("job");
+            var company = job.join("company");
+            var owner = company.join("owner");
+            return cb.equal(owner.get("userId"), companyUserId);
+        };
+    }
+
+    // Don’t join "job" twice in the same query if you can avoid it.
+    // Right now belongsToCompany specs do root.join("job"). JPA usually handles it, but it can create duplicate joins in SQL
+    // root.get("job").get("id") without a join
+    public static Specification<JobApplication> belongsToSameJob(Long jobId) {
+        return (root, query, cb) -> cb.equal(root.get("job").get("id"), jobId);
     }
 
     public static Specification<JobApplication> createdBetween(LocalDate from, LocalDate to) {
@@ -52,14 +62,13 @@ public class UserJobsApplicationsSpecifications {
 
             String like = "%" + keyword.toLowerCase() + "%";
 
-            var companyJoin = root.join("company");
-            var locationJoin = root.join("job");
-            var titleJoin = root.join("job");
+            var job = root.join("job");
+            var user = root.join("user");
 
             return cb.or(
-                    cb.like(cb.lower(companyJoin.get("name")), like),
-                    cb.like(cb.lower(locationJoin.get("location")), like),
-                    cb.like(cb.lower(titleJoin.get("title")), like)
+                    cb.like(cb.lower(job.get("location")), like),
+                    cb.like(cb.lower(job.get("title")), like),
+                    cb.like(cb.lower(user.get("email")), like)
             );
         };
     }

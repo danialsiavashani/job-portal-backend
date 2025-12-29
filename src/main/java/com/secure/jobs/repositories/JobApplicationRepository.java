@@ -11,14 +11,22 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 
 import java.util.List;
+import java.util.Optional;
 
 public interface JobApplicationRepository extends JpaRepository<JobApplication, Long> , JpaSpecificationExecutor<JobApplication> {
     boolean existsByJob_IdAndUser_UserId(Long jobId, Long userId);
 
     // OPTIONAL but recommended for /me list so mapper has job+company without N+1:
 
-    @EntityGraph(attributePaths = {"job", "company"})
+    @EntityGraph(
+            attributePaths = {"job", "job.company", "user"},
+            type = EntityGraph.EntityGraphType.FETCH
+    )
     Page<JobApplication> findAll(Specification<JobApplication> spec, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"job", "user", "company"})
+    Optional<JobApplication> findByIdAndCompany_Owner_UserId(Long id, Long ownerUserId);
+
 
     @EntityGraph(attributePaths = {"job", "user", "company"})
     List<JobApplication> findAllByCompany_IdOrderByCreatedAtDesc(Long companyId);
@@ -28,4 +36,7 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
             Long companyId,
             JobApplicationStatus status
     );
+
+    boolean existsByJob_Id(Long jobId);
+
 }

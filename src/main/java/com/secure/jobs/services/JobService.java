@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface JobService {
@@ -30,7 +31,9 @@ public interface JobService {
             EmploymentType employmentType,
             BigDecimal minPay,
             BigDecimal maxPay,
-            Long companyId
+            Long companyId,
+            LocalDate from,
+            LocalDate to
     );
 
     JobPageResponse getJobsForCompany(
@@ -41,7 +44,9 @@ public interface JobService {
             JobStatus status,
             String location,
             BigDecimal minPay,
-            BigDecimal maxPay
+            BigDecimal maxPay,
+            LocalDate from,
+            LocalDate to
     );
 
     void changeStatus(Long userId, Long jobId, @NotNull JobStatus status);

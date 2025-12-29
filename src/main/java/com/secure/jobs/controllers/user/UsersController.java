@@ -1,4 +1,4 @@
-package com.secure.jobs.controllers;
+package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.user.UserResponse;
 import com.secure.jobs.mappers.UserMapper;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
-public class UserController {
+public class UsersController {
 
 
     private final UserService userService;

@@ -1,4 +1,4 @@
-package com.secure.jobs.controllers;
+package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationRequest;
@@ -12,20 +12,24 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/jobs")
-public class JobApplicationController {
+@RequestMapping("/api")
+public class UserJobApplicationController {
 
     private final JobApplicationService jobApplicationService;
 
-    @PostMapping("/{jobId}/apply")
+
+    @PostMapping("/jobs/{jobId}/apply")
     @PreAuthorize("hasRole('USER')")
     public JobApplicationResponse apply(
             @AuthenticationPrincipal UserDetailsImpl user,
@@ -36,38 +40,32 @@ public class JobApplicationController {
         return JobApplicationMapper.toResponse(app);
     }
 
-    @GetMapping("/me")
+    @GetMapping("/job-applications/me")
     @PreAuthorize("hasRole('USER')")
     public JobApplicationPageResponse myApplications(
             @AuthenticationPrincipal UserDetailsImpl user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PageableDefault(page = 0, size = 10) Pageable pageable,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false)
-            JobApplicationStatus status
+            JobApplicationStatus status,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable locked = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
         return jobApplicationService.getMyApplications(
                 user.getId(),
-                pageable,
+                locked,
                 keyword,
-                status
+                status,
+                from,
+                to
         );
     }
-
-
-    @PutMapping("/{applicationId}/interview")
-    @PreAuthorize("hasRole('COMPANY')")
-    public void moveToInterview(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long applicationId){
-        jobApplicationService.moveToInterview(applicationId, userDetails.getId());
-    }
-
-    @PutMapping("/{applicationId}/reject")
-    @PreAuthorize("hasRole('COMPANY')")
-    public void reject(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long applicationId){
-        jobApplicationService.reject(applicationId, userDetails.getId());
-    }
-
-
-
 }

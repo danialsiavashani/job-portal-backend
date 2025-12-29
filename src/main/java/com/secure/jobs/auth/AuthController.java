@@ -5,6 +5,7 @@ import com.secure.jobs.auth.dto.LoginResponse;
 import com.secure.jobs.auth.dto.RegisterRequest;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.exceptions.UnauthorizedException;
 import com.secure.jobs.models.auth.AppRole;
 import com.secure.jobs.models.auth.Role;
 import com.secure.jobs.models.auth.User;
@@ -20,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -87,25 +88,29 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest request){
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        // Collect roles from the UserDetails
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(item -> item.getAuthority())
+                    .toList();
 
-        String jwt = jwtUtils.generateToken(userDetails.getUsername());
+            String jwt = jwtUtils.generateToken(userDetails.getUsername());
 
-        return new LoginResponse(userDetails.getUsername(), roles, jwt);
+            return ResponseEntity.ok(new LoginResponse(userDetails.getUsername(), roles, jwt));
+
+        } catch (AuthenticationException ex) {
+             throw new UnauthorizedException(ex.getMessage() + ", Invalid username or password");
+        }
     }
 
 

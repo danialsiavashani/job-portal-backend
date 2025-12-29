@@ -1,5 +1,6 @@
-package com.secure.jobs.controllers;
+package com.secure.jobs.controllers.company;
 
+import com.secure.jobs.dto.company.CompanyJobApplicationPageResponse;
 import com.secure.jobs.dto.job.*;
 import com.secure.jobs.mappers.JobMapper;
 import com.secure.jobs.models.job.EmploymentType;
@@ -7,27 +8,30 @@ import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.models.job.JobStatus;
 import com.secure.jobs.security.services.UserDetailsImpl;
+import com.secure.jobs.services.CompanyApplicationService;
 import com.secure.jobs.services.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/company/jobs")
 @RequiredArgsConstructor
-public class CompanyJobController {
+public class CompanyJobsController {
 
     private final JobService jobService;
-
-
+    private final CompanyApplicationService companyApplicationService;
 
     @PostMapping
     @PreAuthorize("hasRole('COMPANY')")
@@ -47,6 +51,13 @@ public class CompanyJobController {
         return JobMapper.toResponse(job);
     }
 
+    @DeleteMapping("/{jobId}")
+    @PreAuthorize("hasRole('COMPANY')")
+    public ResponseEntity<?> deleteJob(@AuthenticationPrincipal UserDetailsImpl user, @PathVariable Long jobId){
+        jobService.deleteJob(user.getId(), jobId);
+       return ResponseEntity.ok("Job deleted successfully.");
+    }
+
     @PatchMapping("/{jobId}/status")
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<?> changeJobStatus(
@@ -62,26 +73,67 @@ public class CompanyJobController {
     @PreAuthorize("hasRole('COMPANY')")
     public JobPageResponse getMyJobs(
             @AuthenticationPrincipal UserDetailsImpl user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PageableDefault(page = 0, size = 10) Pageable pageable,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EmploymentType employmentType,
             @RequestParam(required = false) JobStatus status,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) BigDecimal minPay,
-            @RequestParam(required = false) BigDecimal maxPay
+            @RequestParam(required = false) BigDecimal maxPay,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable locked = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
         return jobService.getJobsForCompany(
                 user.getId(),
-                pageable,
+                locked,
                 keyword,
                 employmentType,
                 status,
                 location,
                 minPay,
-                maxPay
+                maxPay,
+                from,
+                to
         );
+    }
+
+
+    @GetMapping("/{jobId}/applications")
+    @PreAuthorize("hasRole('COMPANY')")
+    public CompanyJobApplicationPageResponse applicationPerJob(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @PageableDefault(page = 0, size = 10) Pageable pageable,
+            @RequestParam(required = false) String keyword,
+            @PathVariable Long jobId,
+            @RequestParam(required = false)
+            JobApplicationStatus status,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
+    ) {
+        Pageable locked = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return companyApplicationService.getCompanyApplicationsPerJob(
+                user.getId(),
+                locked,
+                keyword,
+                jobId,
+                status,
+                from,
+                to);
     }
 
 

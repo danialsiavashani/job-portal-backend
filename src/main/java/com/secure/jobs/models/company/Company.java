@@ -39,6 +39,10 @@ public class Company {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean enabled = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

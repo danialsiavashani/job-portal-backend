@@ -3,15 +3,42 @@ package com.secure.jobs.specifications;
 import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobStatus;
+import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class JobSpecifications {
 
     public static Specification<Job> isPublished() {
         return (root, query, cb) ->
                 cb.equal(root.get("status"), JobStatus.PUBLISHED);
+    }
+
+    public static Specification<Job> createdBetween(LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+
+            Path<LocalDateTime> createdAt = root.get("createdAt"); // LocalDateTime in your entity
+
+            if (from != null && to != null) {
+                LocalDateTime start = from.atStartOfDay();
+                LocalDateTime endExclusive = to.plusDays(1).atStartOfDay();
+                return cb.and(
+                        cb.greaterThanOrEqualTo(createdAt, start),
+                        cb.lessThan(createdAt, endExclusive)
+                );
+            }
+
+            if (from != null) {
+                return cb.greaterThanOrEqualTo(createdAt, from.atStartOfDay());
+            }
+
+            // to != null
+            return cb.lessThan(createdAt, to.plusDays(1).atStartOfDay());
+        };
     }
 
     public static Specification<Job> hasCompany(Long companyId) {

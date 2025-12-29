@@ -18,8 +18,13 @@ import java.time.LocalDateTime;
                         name = "uk_job_application_job_user",
                         columnNames = {"job_id", "user_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_job_app_company_created_at", columnList = "company_id, created_at"),
+                @Index(name = "idx_job_app_company_status_created_at", columnList = "company_id, status, created_at")
         }
 )
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -59,11 +64,13 @@ public class JobApplication {
 
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 
     // Hibernate-safe equality
     @Override

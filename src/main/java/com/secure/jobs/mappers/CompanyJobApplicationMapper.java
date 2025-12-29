@@ -8,7 +8,9 @@ import org.springframework.stereotype.Component;
 public class CompanyJobApplicationMapper {
 
 
-    public CompanyJobApplicationRowResponse toRow(JobApplication app) {
+    public CompanyJobApplicationMapper(){}
+
+    public static CompanyJobApplicationRowResponse toResponse(JobApplication app) {
 
         return new CompanyJobApplicationRowResponse(
                 app.getId(),
@@ -17,6 +19,7 @@ public class CompanyJobApplicationMapper {
                 app.getUser().getUserId(),
                 app.getUser().getUsername(),
                 app.getUser().getEmail(),
+                app.getDocumentUrl(),
                 app.getStatus(),
                 app.getCreatedAt()
         );

@@ -1,18 +1,18 @@
-package com.secure.jobs.dto.company;
+package com.secure.jobs.dto.admin;
 
+import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.models.job.JobApplicationStatus;
 
 import java.time.LocalDateTime;
 
-public record CompanyJobApplicationRowResponse(
+public record AdminCompanyApplicationResponse(
         Long applicationId,
-        Long jobId,
-        String jobTitle,
         Long applicantUserId,
         String applicantUsername,
         String applicantEmail,
         String documentUrl,
-        JobApplicationStatus status,
+        String companyName,
+        CompanyApplicationStatus status,
         LocalDateTime appliedAt
 ) {
 }

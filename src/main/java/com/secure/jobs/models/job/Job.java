@@ -12,7 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "jobs")
+@Table(
+        name = "jobs",
+        indexes = {
+                @Index(name = "idx_jobs_status_created_at", columnList = "status, created_at"),
+                @Index(name = "idx_jobs_company_created_at", columnList = "company_id, created_at"),
+                @Index(name = "idx_jobs_company_status_created_at", columnList = "company_id, status, created_at")
+        }
+)
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -92,6 +100,6 @@ public class Job {
     private JobStatus status;
 
     @org.hibernate.annotations.CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at",nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

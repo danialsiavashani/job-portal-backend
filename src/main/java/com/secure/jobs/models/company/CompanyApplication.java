@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
         name = "company_applications",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "user_id")
+        },
+        indexes = {
+                @Index(name = "idx_status_created_at", columnList = "status, created_at"),
         }
 )
 @Getter
@@ -47,7 +50,7 @@ public class CompanyApplication {
     private CompanyApplicationStatus status;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "created_at",nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

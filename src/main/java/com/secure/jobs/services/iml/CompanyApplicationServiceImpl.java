@@ -1,9 +1,13 @@
 package com.secure.jobs.services.iml;
 
+import com.secure.jobs.dto.admin.AdminCompanyApplicationPageResponse;
+import com.secure.jobs.dto.admin.AdminCompanyApplicationResponse;
 import com.secure.jobs.dto.company.CompanyApplicationResponse;
+import com.secure.jobs.dto.company.CompanyJobApplicationPageResponse;
 import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.AdminCompanyApplicationMapper;
 import com.secure.jobs.mappers.CompanyApplicationMapper;
 import com.secure.jobs.mappers.CompanyJobApplicationMapper;
 import com.secure.jobs.models.auth.AppRole;
@@ -16,10 +20,16 @@ import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.repositories.*;
 import com.secure.jobs.services.CompanyApplicationService;
+import com.secure.jobs.specifications.AdminCompanyApplicationsSpecifications;
+import com.secure.jobs.specifications.CompanyJobApplicationSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -137,6 +147,46 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
     @Override
     @Transactional(readOnly = true)
+    public AdminCompanyApplicationPageResponse getAdminCompanyApplications(
+            Long userId,
+            Pageable locked,
+            String keyword,
+            CompanyApplicationStatus status,
+            LocalDate from,
+            LocalDate to) {
+
+        Specification<CompanyApplication> spec =
+                Specification.where(AdminCompanyApplicationsSpecifications.keyword(keyword))
+                        .and(AdminCompanyApplicationsSpecifications.createdBetween(from, to));
+
+        if (status != null) {
+            spec = spec.and(AdminCompanyApplicationsSpecifications.hasApplicationStatus(status));
+        }
+
+        Page<CompanyApplication> page = companyApplicationRepository.findAll(
+                spec,
+                locked
+        );
+
+        List<AdminCompanyApplicationResponse> adminCompanyApplications = page.getContent()
+                .stream()
+                .map(AdminCompanyApplicationMapper::toResponse)
+                .toList();
+
+
+        return new AdminCompanyApplicationPageResponse(
+                adminCompanyApplications,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
     public CompanyApplication findMyApplication(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -150,34 +200,93 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompanyJobApplicationRowResponse> getCompanyApplications(Long companyUserId, String statusParam) {
-        Company company = companyRepository.findByOwner_UserId(companyUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found for user"));
+    public CompanyJobApplicationPageResponse getCompanyApplications(
+            Long companyUserId,
+            Pageable locked,
+            String keyword,
+            JobApplicationStatus status,
+            LocalDate from,
+            LocalDate to
+    ) {
 
-        Long companyId = company.getId();
+        Specification<JobApplication> spec =
+                Specification.where(CompanyJobApplicationSpecification.belongsToCompany(companyUserId))
+                        .and(CompanyJobApplicationSpecification.keyword(keyword))
+                        .and(CompanyJobApplicationSpecification.createdBetween(from, to));
 
-        String normalized = (statusParam == null ? "PENDING" : statusParam.trim().toUpperCase());
 
-        List<JobApplication> apps;
 
-        if ("ALL".equals(normalized)) {
-            apps = jobApplicationRepository.findAllByCompany_IdOrderByCreatedAtDesc(companyId);
-        } else {
-            JobApplicationStatus status;
-            try {
-                status = JobApplicationStatus.valueOf(normalized);
-            } catch (IllegalArgumentException ex) {
-                throw new BadRequestException("Invalid status. Use ALL, PENDING, INTERVIEW, or REJECTED.");
-            }
-            apps = jobApplicationRepository.findAllByCompany_IdAndStatusOrderByCreatedAtDesc(companyId, status);
+        if (status != null) {
+            spec = spec.and(CompanyJobApplicationSpecification.hasApplicationStatus(status));
         }
 
-        return apps.stream()
-                .map(companyJobApplicationMapper::toRow)
+        Page<JobApplication> page = jobApplicationRepository.findAll(
+                spec,
+                locked
+        );
+
+        List<CompanyJobApplicationRowResponse> jobApplications = page.getContent()
+                .stream()
+                .map(CompanyJobApplicationMapper::toResponse)
                 .toList();
+
+
+        return new CompanyJobApplicationPageResponse(
+                jobApplications,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
+    @Override
+    public CompanyJobApplicationPageResponse getCompanyApplicationsPerJob(
+            Long companyUserId,
+            Pageable locked,
+            String keyword,
+            Long jobId,
+            JobApplicationStatus status,
+            LocalDate from,
+            LocalDate to
+    ) {
+
+        Specification<JobApplication> spec =
+                Specification.where(CompanyJobApplicationSpecification.belongsToCompany(companyUserId))
+                        .and(CompanyJobApplicationSpecification.belongsToSameJob(jobId))
+                        .and(CompanyJobApplicationSpecification.keyword(keyword))
+                        .and(CompanyJobApplicationSpecification.createdBetween(from, to));
+
+
+        if (status != null) {
+            spec = spec.and(CompanyJobApplicationSpecification.hasApplicationStatus(status));
+        }
+
+        Page<JobApplication> page = jobApplicationRepository.findAll(
+                spec,
+                locked
+        );
+
+        List<CompanyJobApplicationRowResponse> jobApplications = page.getContent()
+                .stream()
+                .map(CompanyJobApplicationMapper::toResponse)
+                .toList();
+
+
+        return new CompanyJobApplicationPageResponse(
+                jobApplications,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
+
+
+
+}
 
 
 

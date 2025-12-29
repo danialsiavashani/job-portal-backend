@@ -1,10 +1,13 @@
 package com.secure.jobs.services.iml;
 
+import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationRequest;
 import com.secure.jobs.dto.job.JobApplicationResponse;
+import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.CompanyJobApplicationMapper;
 import com.secure.jobs.mappers.JobApplicationMapper;
 import com.secure.jobs.models.auth.User;
 import com.secure.jobs.models.job.Job;
@@ -15,16 +18,17 @@ import com.secure.jobs.repositories.JobApplicationRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.services.JobApplicationService;
-import com.secure.jobs.specifications.JobSpecifications;
 import com.secure.jobs.specifications.UserJobsApplicationsSpecifications;
 import com.secure.jobs.validation.ValidateCompanyOwnership;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -72,43 +76,22 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
         return jobApplicationRepository.save(app);
     }
 
-    @Override
-    @Transactional
-    public void moveToInterview(Long applicationId, Long companyUserId) {
-        JobApplication application = jobApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
-
-        validateOwnership.validateCompanyOwnership(application, companyUserId);
-
-        if (application.getStatus() != JobApplicationStatus.PENDING) {
-            throw new BadRequestException("Application is already processed");
-        }
-        application.setStatus(JobApplicationStatus.INTERVIEW);
-    }
-
-    @Override
-    @Transactional
-    public void reject(Long applicationId, Long companyUserId) {
-        JobApplication application = jobApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
-
-        validateOwnership.validateCompanyOwnership(application, companyUserId);
-
-        if (application.getStatus() != JobApplicationStatus.PENDING) {
-            throw new BadRequestException("Application is already processed");
-        }
-
-        application.setStatus(JobApplicationStatus.REJECTED);
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public JobApplicationPageResponse getMyApplications(Long userId, Pageable pageable,
-                                                              String keyword, JobApplicationStatus status) {
+    public JobApplicationPageResponse getMyApplications(
+            Long userId,
+            Pageable pageable,
+            String keyword,
+            JobApplicationStatus status,
+            LocalDate from,
+            LocalDate to
+    ) {
 
         Specification<JobApplication> spec =
                 Specification.where(UserJobsApplicationsSpecifications.belongsToUser(userId))
-                        .and(UserJobsApplicationsSpecifications.keyword(keyword));
+                        .and(UserJobsApplicationsSpecifications.keyword(keyword))
+                        .and(UserJobsApplicationsSpecifications.createdBetween(from, to));
 
         if (status != null) {
             spec = spec.and(UserJobsApplicationsSpecifications.hasApplicationStatus(status));
@@ -134,6 +117,33 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
                 page.getTotalPages(),
                 page.isLast()
         );
+    }
+
+    @Override
+    public CompanyJobApplicationRowResponse updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
+        JobApplication application = jobApplicationRepository.findByIdAndCompany_Owner_UserId(applicationId, companyOwnerUserId)
+                .orElseThrow(()->new  ResourceNotFoundException("Application not found or not owned"));
+
+        if (!application.getCompany().isEnabled()){
+            throw new ApiException( "Company is disabled", HttpStatus.BAD_REQUEST);
+        }
+
+        if(application.getStatus() != JobApplicationStatus.PENDING){
+            throw new BadRequestException("Only PENDING applications can be updated");
+        }
+
+        if(newStatus != JobApplicationStatus.INTERVIEW &&
+            newStatus != JobApplicationStatus.REJECTED &&
+                newStatus != JobApplicationStatus.HIRED
+        ){
+            throw new  BadRequestException("Invalid status transition");
+        }
+
+        application.setStatus(newStatus);
+
+        jobApplicationRepository.save(application);
+
+        return CompanyJobApplicationMapper.toResponse(application);
     }
 
 }

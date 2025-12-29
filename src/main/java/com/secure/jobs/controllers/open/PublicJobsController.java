@@ -1,4 +1,4 @@
-package com.secure.jobs.controllers;
+package com.secure.jobs.controllers.open;
 
 import com.secure.jobs.dto.job.JobPageResponse;
 import com.secure.jobs.dto.job.JobResponse;
@@ -6,40 +6,54 @@ import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.services.JobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 @RestController
 @RequestMapping("/api/public/jobs")
 @RequiredArgsConstructor
-public class PublicJobController {
+public class PublicJobsController {
 
     private final JobService jobService;
 
     @GetMapping
     public JobPageResponse getPublishedJobs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PageableDefault(page = 0, size = 10) Pageable pageable,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EmploymentType employmentType,
             @RequestParam(required = false) BigDecimal minPay,
             @RequestParam(required = false) BigDecimal maxPay,
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) String location
+            @RequestParam(required = false) String location,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable locked = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
         return jobService.getPublishedJobs(
-                pageable,
+                locked,
                 keyword,
                 location,
                 employmentType,
                 minPay,
                 maxPay,
-                companyId
+                companyId,
+                from,
+                to
         );
     }
 
