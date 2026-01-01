@@ -2,28 +2,25 @@ package com.secure.jobs.services.iml;
 
 import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
-import com.secure.jobs.dto.job.JobApplicationRequest;
 import com.secure.jobs.dto.job.JobApplicationResponse;
-import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.CompanyJobApplicationMapper;
 import com.secure.jobs.mappers.JobApplicationMapper;
-import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
-import com.secure.jobs.models.job.JobStatus;
 import com.secure.jobs.repositories.JobApplicationRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.repositories.UserRepository;
+import com.secure.jobs.security.guards.*;
+import com.secure.jobs.services.CandidateProfileService;
 import com.secure.jobs.services.JobApplicationService;
 import com.secure.jobs.specifications.UserJobsApplicationsSpecifications;
-import com.secure.jobs.validation.ValidateCompanyOwnership;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,19 +36,20 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private final JobApplicationRepository jobApplicationRepository;
-    private final ValidateCompanyOwnership validateOwnership;
+    private final CompanyGuard companyGuard;
+    private final JobApplicationGuard jobApplicationGuard;
+    private final UserGuard userGuard;
+    private final CandidateProfileService candidateProfileService;
+    private final ProfileCompletionGuard profileCompletionGuard;
+    private final DegreeEligibilityGuard degreeEligibilityGuard;
+
+
 
     @Override
-    public JobApplication apply(Long userId, Long jobId, JobApplicationRequest request) {
+    public JobApplication apply(Long userId, Long jobId) {
 
-        Job job = jobRepository.findByIdWithCompany(jobId)
+        Job job = jobRepository.findPublishedEnabledByIdWithCompanyAndDegreeFields(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-
-        // ✅ only published jobs can be applied to
-        if (job.getStatus() != JobStatus.PUBLISHED) {
-            // return 404 so we don't leak draft jobs
-            throw new ResourceNotFoundException("Job not found");
-        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -62,13 +60,16 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
             throw new BadRequestException("You already applied to this job.");
         }
 
+        // ✅ profile must exist + be complete
+        var profile = candidateProfileService.getOrCreate(userId);
+        profileCompletionGuard.assertComplete(profile);
+        degreeEligibilityGuard.assertEligible(profile, job);
+
         JobApplication app = JobApplication.builder()
                 .job(job)
                 .company(job.getCompany())   // derive from job
                 .user(user)
                 .status(JobApplicationStatus.PENDING)
-                .documentPublicId(request.documentPublicId())
-                .documentUrl(request.documentUrl())
                 .build();
 
         job.incrementApplicants();
@@ -121,16 +122,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
 
     @Override
     public CompanyJobApplicationRowResponse updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
-        JobApplication application = jobApplicationRepository.findByIdAndCompany_Owner_UserId(applicationId, companyOwnerUserId)
-                .orElseThrow(()->new  ResourceNotFoundException("Application not found or not owned"));
-
-        if (!application.getCompany().isEnabled()){
-            throw new ApiException( "Company is disabled", HttpStatus.BAD_REQUEST);
-        }
-
-        if(application.getStatus() != JobApplicationStatus.PENDING){
-            throw new BadRequestException("Only PENDING applications can be updated");
-        }
+        JobApplication application = jobApplicationGuard.requireCompanyOwnedEnabledPendingApplication(applicationId, companyOwnerUserId);
 
         if(newStatus != JobApplicationStatus.INTERVIEW &&
             newStatus != JobApplicationStatus.REJECTED &&
@@ -144,6 +136,12 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
         jobApplicationRepository.save(application);
 
         return CompanyJobApplicationMapper.toResponse(application);
+    }
+
+    @Override
+    public void withdrawFromJobApplication( Long applicationId, Long userId) {
+        JobApplication app = userGuard.requireUserOwnedPendingApplication(applicationId, userId);
+        app.setStatus(JobApplicationStatus.WITHDRAWN);
     }
 
 }

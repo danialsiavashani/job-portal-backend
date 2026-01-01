@@ -2,7 +2,7 @@ package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.user.UserResponse;
 import com.secure.jobs.mappers.UserMapper;
-import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.repositories.CompanyApplicationRepository;
 import com.secure.jobs.security.services.UserDetailsImpl;

@@ -1,6 +1,7 @@
 package com.secure.jobs.models.job;
 
 import com.secure.jobs.models.company.Company;
+import com.secure.jobs.models.user.profile.DegreeField;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
@@ -9,7 +10,9 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -47,6 +50,19 @@ public class Job {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EmploymentType employmentType;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "job_degree_fields",
+            joinColumns = @JoinColumn(name = "job_id"),
+            inverseJoinColumns = @JoinColumn(name = "degree_field_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_job_degree_field",
+                    columnNames = {"job_id", "degree_field_id"}
+            )
+    )
+    private Set<DegreeField> degreeFields = new HashSet<>();
 
     @Column(nullable = false)
     private int numberOfApplicants = 0;

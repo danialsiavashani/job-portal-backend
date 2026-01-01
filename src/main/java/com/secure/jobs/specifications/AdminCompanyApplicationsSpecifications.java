@@ -1,11 +1,8 @@
 package com.secure.jobs.specifications;
 
-import com.secure.jobs.models.auth.AppRole;
-import com.secure.jobs.models.auth.Role;
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 import jakarta.persistence.criteria.Path;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;

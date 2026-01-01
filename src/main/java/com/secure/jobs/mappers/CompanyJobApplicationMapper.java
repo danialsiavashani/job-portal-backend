@@ -12,6 +12,16 @@ public class CompanyJobApplicationMapper {
 
     public static CompanyJobApplicationRowResponse toResponse(JobApplication app) {
 
+        var profile = app.getUser().getCandidateProfile();
+
+        Long degreeFieldId = null;
+        String degreeFieldName = null;
+
+        if (profile != null && profile.getDegreeField() != null) {
+            degreeFieldId = profile.getDegreeField().getId();
+            degreeFieldName = profile.getDegreeField().getName();
+        }
+
         return new CompanyJobApplicationRowResponse(
                 app.getId(),
                 app.getJob().getId(),
@@ -19,7 +29,12 @@ public class CompanyJobApplicationMapper {
                 app.getUser().getUserId(),
                 app.getUser().getUsername(),
                 app.getUser().getEmail(),
-                app.getDocumentUrl(),
+                profile != null ? profile.getResumeUrl() : null,
+                profile != null ? profile.getEducationLevel() : null,
+                degreeFieldId,
+                degreeFieldName,
+                profile != null && profile.getYearsExperience() != null ? profile.getYearsExperience().doubleValue() : null,
+                profile != null ? profile.getLocation() : null,
                 app.getStatus(),
                 app.getCreatedAt()
         );

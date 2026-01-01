@@ -1,8 +1,7 @@
 package com.secure.jobs.mappers;
 
 import com.secure.jobs.dto.user.UserResponse;
-import com.secure.jobs.models.auth.User;
-import com.secure.jobs.models.company.CompanyApplication;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 
 public class UserMapper {

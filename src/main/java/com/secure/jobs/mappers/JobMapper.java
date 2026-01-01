@@ -5,26 +5,30 @@ import com.secure.jobs.dto.job.JobResponse;
 import com.secure.jobs.dto.job.UpdateJobRequest;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.models.job.Job;
+import com.secure.jobs.models.user.profile.DegreeField;
+import java.util.Set;
+
+
 
 public class JobMapper {
 
-    public static Job toEntity(CreateJobRequest req, Company company) {
+    public static Job toEntity(CreateJobRequest req, Company company,Set<DegreeField> degreeFields) {
+
         return Job.builder()
                 .title(req.title())
                 .description(req.description())
                 .tagline(req.tagline())
                 .employmentType(req.employmentType())
                 .level(req.level())
-
                 .payMin(req.payMin())
                 .payMax(req.payMax())
                 .payPeriod(req.payPeriod())
                 .payType(req.payType())
-
                 .location(req.location())
                 .benefits(req.benefits())
                 .minimumRequirements(req.minimumRequirements())
                 .company(company)
+                .degreeFields(degreeFields)
                 .build();
     }
 
@@ -37,22 +41,21 @@ public class JobMapper {
                 job.getTagline(),
                 job.getEmploymentType(),
                 job.getLevel(),
-
                 job.getPayMin(),
                 job.getPayMax(),
                 job.getPayPeriod(),
                 job.getPayType(),
-
                 job.getLocation(),
                 job.getBenefits(),
                 job.getMinimumRequirements(),
+                job.getDegreeFields(),
                 job.getStatus(),
                 job.getCompany().getName(),
                 job.getCreatedAt()
         );
     }
 
-    public static void updateEntity(Job job, UpdateJobRequest req) {
+    public static void updateEntity(Job job, UpdateJobRequest req, Set<DegreeField> degreeFields) {
 
         if (req.title() != null) job.setTitle(req.title());
         if (req.description() != null) job.setDescription(req.description());
@@ -69,12 +72,17 @@ public class JobMapper {
             job.getBenefits().clear();
             job.getBenefits().addAll(req.benefits());
         }
+        if(req.degreeFieldIds() != null){
+            job.setDegreeFields(degreeFields);
+        }
 
         if (req.minimumRequirements() != null) {
             job.getMinimumRequirements().clear();
             job.getMinimumRequirements().addAll(req.minimumRequirements());
         }
     }
+
+
 }
 
 

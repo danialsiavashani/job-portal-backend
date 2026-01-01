@@ -1,8 +1,7 @@
 package com.secure.jobs.models.job;
 
-import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.company.Company;
-import com.secure.jobs.models.company.CompanyApplication;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,17 +50,9 @@ public class JobApplication {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    // Verification document (Cloudinary)
-    @Column(name = "document_public_id")
-    private String documentPublicId;
-
-    @Column(name = "document_url", length = 500)
-    private String documentUrl;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private JobApplicationStatus status;
-
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

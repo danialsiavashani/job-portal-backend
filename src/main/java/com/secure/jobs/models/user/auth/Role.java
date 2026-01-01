@@ -1,4 +1,4 @@
-package com.secure.jobs.models.auth;
+package com.secure.jobs.models.user.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

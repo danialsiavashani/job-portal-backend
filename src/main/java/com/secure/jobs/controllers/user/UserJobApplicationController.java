@@ -1,20 +1,19 @@
 package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
-import com.secure.jobs.dto.job.JobApplicationRequest;
 import com.secure.jobs.dto.job.JobApplicationResponse;
 import com.secure.jobs.mappers.JobApplicationMapper;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.JobApplicationService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,13 +30,12 @@ public class UserJobApplicationController {
 
     @PostMapping("/jobs/{jobId}/apply")
     @PreAuthorize("hasRole('USER')")
-    public JobApplicationResponse apply(
+    public ResponseEntity<JobApplicationResponse> apply(
             @AuthenticationPrincipal UserDetailsImpl user,
-            @PathVariable Long jobId,
-            @RequestBody @Valid JobApplicationRequest request
+            @PathVariable Long jobId
     ) {
-        JobApplication app = jobApplicationService.apply(user.getId(), jobId, request);
-        return JobApplicationMapper.toResponse(app);
+        JobApplication app = jobApplicationService.apply(user.getId(), jobId);
+        return ResponseEntity.status(201).body(JobApplicationMapper.toResponse(app));
     }
 
     @GetMapping("/job-applications/me")
@@ -68,4 +66,16 @@ public class UserJobApplicationController {
                 to
         );
     }
+
+    @PatchMapping("/job-applications/{applicationId}/withdraw")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> withdrawMyJobApplication(
+            @PathVariable Long applicationId,
+            @AuthenticationPrincipal UserDetailsImpl user
+            ){
+         jobApplicationService.withdrawFromJobApplication( applicationId,user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

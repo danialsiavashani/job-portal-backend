@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @RestController
@@ -52,6 +53,12 @@ public class CompanyJobApplicationController {
             @RequestParam(required = false)
             JobApplicationStatus status,
             @RequestParam(required = false)
+            BigDecimal minYears,
+            @RequestParam(required = false)
+            Long degreeFieldId,
+            @RequestParam(required = false)
+            String educationLevel,
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate from,
             @RequestParam(required = false)
@@ -68,6 +75,9 @@ public class CompanyJobApplicationController {
                 locked,
                 keyword,
                 status,
+                minYears,
+                degreeFieldId,
+                educationLevel,
                 from,
                 to);
     }

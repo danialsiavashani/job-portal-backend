@@ -10,9 +10,9 @@ import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.AdminCompanyApplicationMapper;
 import com.secure.jobs.mappers.CompanyApplicationMapper;
 import com.secure.jobs.mappers.CompanyJobApplicationMapper;
-import com.secure.jobs.models.auth.AppRole;
-import com.secure.jobs.models.auth.Role;
-import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.user.auth.AppRole;
+import com.secure.jobs.models.user.auth.Role;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
@@ -28,9 +28,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,6 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
     private final CompanyApplicationRepository companyApplicationRepository;
     private final JobApplicationRepository jobApplicationRepository;
-    private final CompanyJobApplicationMapper companyJobApplicationMapper;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -198,13 +198,16 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
                 ));
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public CompanyJobApplicationPageResponse getCompanyApplications(
             Long companyUserId,
             Pageable locked,
             String keyword,
             JobApplicationStatus status,
+            BigDecimal minYears,
+            Long degreeFieldId,
+            String educationLevel,
             LocalDate from,
             LocalDate to
     ) {
@@ -212,7 +215,10 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
         Specification<JobApplication> spec =
                 Specification.where(CompanyJobApplicationSpecification.belongsToCompany(companyUserId))
                         .and(CompanyJobApplicationSpecification.keyword(keyword))
-                        .and(CompanyJobApplicationSpecification.createdBetween(from, to));
+                        .and(CompanyJobApplicationSpecification.createdBetween(from, to))
+                        .and(CompanyJobApplicationSpecification.minYearsExperience(minYears))
+                        .and(CompanyJobApplicationSpecification.hasDegreeFieldId(degreeFieldId))
+                        .and(CompanyJobApplicationSpecification.hasEducationLevel(educationLevel));
 
 
 
@@ -283,6 +289,8 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
                 page.isLast()
         );
     }
+
+
 
 
 

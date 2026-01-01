@@ -10,9 +10,14 @@ import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.JobMapper;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.models.job.*;
+import com.secure.jobs.models.user.profile.DegreeField;
 import com.secure.jobs.repositories.CompanyRepository;
+import com.secure.jobs.repositories.DegreeFieldRepository;
 import com.secure.jobs.repositories.JobApplicationRepository;
 import com.secure.jobs.repositories.JobRepository;
+import com.secure.jobs.security.guards.CompanyGuard;
+import com.secure.jobs.security.guards.JobGuard;
+import com.secure.jobs.services.CompanyService;
 import com.secure.jobs.services.JobService;
 import com.secure.jobs.specifications.CompanyJobsSpecifications;
 import com.secure.jobs.specifications.JobSpecifications;
@@ -28,9 +33,8 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,62 +42,37 @@ import java.util.Optional;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
-    private final CompanyRepository companyRepository;
     private final JobPayValidator jobPayValidator;
     private final JobApplicationRepository jobApplicationRepository;
-
-
-    private Job requireOwnedActiveCompanyJob(Long userId, Long jobId) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-
-//        if (!job.getCompany().isEnabled()) {
-//            throw new ApiException("Company is disabled",HttpStatus.FORBIDDEN);
-//        }
-        if (!job.getCompany().getOwner().getUserId().equals(userId)) {
-            throw new AccessDeniedException("You do not own this job");
-        }
-        return job;
-    }
-
-
+    private final JobGuard jobGuard;
+    private final CompanyGuard companyGuard;
+    private final CompanyRepository companyRepository;
+    private final DegreeFieldRepository degreeFieldRepository;
 
     @Override
     public Job createJob(Long userId, CreateJobRequest request) {
-        Company company =  companyRepository.findByOwner_UserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User is not a company"));
-
-//        if (!company.isEnabled()) {
-//            throw new ApiException( "Company is disabled",HttpStatus.BAD_REQUEST);
-//        }
-
+        Company company = companyGuard.requireEnabledCompanyOwnedByUser(userId);
         jobPayValidator.validate(request.payMin(), request.payMax(), request.payType(), request.payPeriod());
-        Job job = JobMapper.toEntity(request, company);
+        Set<DegreeField> degreeFields = resolveDegreeFields(request.degreeFieldIds());
+        Job job = JobMapper.toEntity(request, company, degreeFields);
         job.setStatus(JobStatus.DRAFT);
-
         return jobRepository.save(job);
     }
 
     @Override
     public Job updateJob(Long userId, Long jobId, UpdateJobRequest request){
-
-        Job job = requireOwnedActiveCompanyJob(userId,jobId);
-
+        Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
         jobPayValidator.validateForUpdate(job, request);
-
-        JobMapper.updateEntity(job, request);
-
+        Set<DegreeField> degreeFields = resolveDegreeFields(request.degreeFieldIds());
+        JobMapper.updateEntity(job, request, degreeFields);
         return jobRepository.save(job);
-
     }
 
     @Override
     public void deleteJob(Long userId, Long jobId) {
-        Job job = requireOwnedActiveCompanyJob(userId,jobId);
-
+        Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
         if(jobApplicationRepository.existsByJob_Id(jobId)){
             throw new ApiException( "Cant delete a job, there are  applications associated with this job, better to disable it",HttpStatus.BAD_REQUEST);
-
         }
             jobRepository.delete(job);
     }
@@ -114,7 +93,7 @@ public class JobServiceImpl implements JobService {
             LocalDate from,
             LocalDate to
     ) {
-
+//        Company company = companyGuard.requireEnabledCompanyOwnedByUser(userId); // so i had to disable it, because I feel like no matter what a company should be able to see its jobs
         Company company = companyRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User is not a company"));
 
@@ -182,9 +161,9 @@ public class JobServiceImpl implements JobService {
             LocalDate to
     ) {
 
-
         Specification<Job> spec = JobSpecifications.isPublished()
-                .and(JobSpecifications.createdBetween(from, to));
+                .and(JobSpecifications.createdBetween(from, to))
+                .and(JobSpecifications.isCompanyEnabled());
 
         if (keyword != null) {
             spec = spec.and(JobSpecifications.keyword(keyword));
@@ -232,10 +211,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void changeStatus(Long userId, Long jobId, JobStatus newStatus) {
-
-        Job job = requireOwnedActiveCompanyJob(userId,jobId);
-
-
+        Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
         // Allowed transitions only
         if (job.getStatus() == JobStatus.DRAFT && newStatus == JobStatus.PUBLISHED) {
             job.setStatus(JobStatus.PUBLISHED);
@@ -257,15 +233,31 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional(readOnly = true)
     public JobResponse getPublishedJobById(Long jobId) {
-
-        Job job = jobRepository.findByIdWithCompany(jobId)
+        Job job = jobRepository.findPublishedEnabledByIdWithCompanyAndDegreeFields(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-
-        if (job.getStatus() != JobStatus.PUBLISHED) {
-            throw new ResourceNotFoundException("Job not found");
-            // 👆 intentional: do NOT leak draft jobs
-        }
-
         return JobMapper.toResponse(job);
     }
+
+
+    private Set<DegreeField> resolveDegreeFields(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) return new HashSet<>();
+
+        List<DegreeField> fields = degreeFieldRepository.findAllById(ids);
+
+        Set<Long> foundIds = fields.stream().map(DegreeField::getId).collect(Collectors.toSet());
+        Set<Long> missing = new HashSet<>(ids);
+        missing.removeAll(foundIds);
+
+        if (!missing.isEmpty()) {
+            throw new ResourceNotFoundException("DegreeField(s) not found: " + missing);
+        }
+
+        for (DegreeField df : fields) {
+            if (!df.isActive()) throw new BadRequestException("DegreeField is inactive: " + df.getId());
+        }
+
+        return new HashSet<>(fields);
+    }
+
+
 }

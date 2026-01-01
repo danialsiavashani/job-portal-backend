@@ -1,6 +1,6 @@
 package com.secure.jobs.security.services;
 
-import com.secure.jobs.models.auth.User;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

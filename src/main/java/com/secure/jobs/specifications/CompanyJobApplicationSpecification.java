@@ -5,6 +5,7 @@ import com.secure.jobs.models.job.JobApplicationStatus;
 import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -47,6 +48,34 @@ public class CompanyJobApplicationSpecification {
 
             // to != null
             return cb.lessThan(createdAt, to.plusDays(1).atStartOfDay());
+        };
+    }
+
+    public static Specification<JobApplication> minYearsExperience(BigDecimal minYears) {
+        return (root, query, cb) -> {
+            if (minYears == null) return cb.conjunction();
+            var user = root.join("user");
+            var profile = user.join("candidateProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            return cb.greaterThanOrEqualTo(profile.get("yearsExperience"), minYears);
+        };
+    }
+
+    public static Specification<JobApplication> hasEducationLevel(String level) {
+        return (root, query, cb) -> {
+            if (level == null || level.isBlank()) return cb.conjunction();
+            var user = root.join("user");
+            var profile = user.join("candidateProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            return cb.equal(profile.get("educationLevel"), Enum.valueOf(com.secure.jobs.models.user.profile.EducationLevel.class, level));
+        };
+    }
+
+    public static Specification<JobApplication> hasDegreeFieldId(Long degreeFieldId) {
+        return (root, query, cb) -> {
+            if (degreeFieldId == null) return cb.conjunction();
+            var user = root.join("user");
+            var profile = user.join("candidateProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            var degree = profile.join("degreeField", jakarta.persistence.criteria.JoinType.LEFT);
+            return cb.equal(degree.get("id"), degreeFieldId);
         };
     }
 

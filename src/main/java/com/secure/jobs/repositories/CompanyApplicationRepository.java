@@ -2,8 +2,7 @@ package com.secure.jobs.repositories;
 
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
-import com.secure.jobs.models.auth.User;
-import com.secure.jobs.models.job.JobApplication;
+import com.secure.jobs.models.user.auth.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

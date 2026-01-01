@@ -6,6 +6,7 @@ import com.secure.jobs.models.job.PayType;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 public record UpdateJobRequest(
         String title,
@@ -13,12 +14,11 @@ public record UpdateJobRequest(
         String tagline,
         EmploymentType employmentType,
         String level,
-
         BigDecimal payMin,
         BigDecimal payMax,
         PayPeriod payPeriod,
         PayType payType,
-
+        Set<Long> degreeFieldIds,
         String location,
         List<String> benefits,
         List<String> minimumRequirements

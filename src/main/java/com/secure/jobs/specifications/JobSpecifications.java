@@ -17,6 +17,11 @@ public class JobSpecifications {
                 cb.equal(root.get("status"), JobStatus.PUBLISHED);
     }
 
+    public static Specification<Job> isCompanyEnabled() {
+        return (root, query, cb) -> cb.isTrue(root.get("company").get("enabled"));
+    }
+
+
     public static Specification<Job> createdBetween(LocalDate from, LocalDate to) {
         return (root, query, cb) -> {
             if (from == null && to == null) return cb.conjunction();

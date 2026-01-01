@@ -41,4 +41,15 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
     @EntityGraph(attributePaths = {"company"})
     Page<Job> findAll(Specification<Job> spec, Pageable pageable);
 
+    @Query("""
+    select distinct j from Job j
+    join fetch j.company c
+    left join fetch j.degreeFields df
+    where j.id = :jobId
+      and j.status = com.secure.jobs.models.job.JobStatus.PUBLISHED
+      and c.enabled = true
+""")
+    Optional<Job> findPublishedEnabledByIdWithCompanyAndDegreeFields(Long jobId);
+
+
 }

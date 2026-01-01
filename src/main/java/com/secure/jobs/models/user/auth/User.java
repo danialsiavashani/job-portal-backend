@@ -1,6 +1,7 @@
-package com.secure.jobs.models.auth;
+package com.secure.jobs.models.user.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.secure.jobs.models.user.profile.CandidateProfile;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -48,6 +49,10 @@ public class User {
     @ToString.Exclude
     private Role role;
 
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private CandidateProfile candidateProfile;
+
     // Spring Security account flags
     @Column(nullable = false)
     private boolean accountNonLocked = true;
@@ -83,12 +88,7 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedDate;
 
-    // Resume (Cloudinary)
-    @Column(name = "resume_public_id")
-    private String resumePublicId;
 
-    @Column(name = "resume_url", length = 500)
-    private String resumeUrl;
 
     // equals/hashCode safe for Hibernate
     @Override
