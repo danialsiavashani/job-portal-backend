@@ -3,6 +3,9 @@ package com.secure.jobs.controllers.company;
 import com.secure.jobs.dto.company.CompanyJobApplicationPageResponse;
 import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.dto.company.UpdateJobApplicationStatusRequest;
+import com.secure.jobs.dto.job.UpdateJobApplicationStatusResponse;
+import com.secure.jobs.mappers.JobApplicationMapper;
+import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.CompanyApplicationService;
@@ -32,16 +35,18 @@ public class CompanyJobApplicationController {
 
     @PatchMapping("/{applicationId}/status")
     @PreAuthorize("hasRole('COMPANY')")
-    public CompanyJobApplicationRowResponse updateStatus(
+    public UpdateJobApplicationStatusResponse updateStatus(
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long applicationId,
             @Valid @RequestBody UpdateJobApplicationStatusRequest request
     ){
-        return jobApplicationService.updateJobApplicationStatus(
+        JobApplication app = jobApplicationService.updateJobApplicationStatus(
             user.getId(),
             applicationId,
             request.status()
         );
+
+        return JobApplicationMapper.toUpdateStatusResponse(app);
     }
 
     @GetMapping("/list")
@@ -81,8 +86,5 @@ public class CompanyJobApplicationController {
                 from,
                 to);
     }
-
-
-
 
 }

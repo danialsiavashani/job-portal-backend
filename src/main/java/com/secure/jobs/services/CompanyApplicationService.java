@@ -14,13 +14,13 @@ import java.time.LocalDate;
 
 
 public interface CompanyApplicationService {
-    CompanyApplication apply(Long userId, String companyName, String documentPublicId, String documentUrl);
+    CompanyApplicationResponse apply(Long userId, String companyName, String documentPublicId, String documentUrl);
 
     CompanyApplicationResponse approve(Long applicationId);
 
     CompanyApplicationResponse reject(Long applicationId, String reason);
 
-    CompanyApplication findMyApplication(Long userId);
+    CompanyApplicationResponse findMyApplication(Long userId);
 
     @Transactional(readOnly = true)
     CompanyJobApplicationPageResponse getCompanyApplications(

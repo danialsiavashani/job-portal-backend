@@ -27,5 +27,6 @@ public interface CompanyApplicationRepository extends JpaRepository<CompanyAppli
             attributePaths = {"user"},
             type = EntityGraph.EntityGraphType.FETCH
     )
+
     Page<CompanyApplication> findAll(Specification<CompanyApplication> spec, Pageable pageable);
 }

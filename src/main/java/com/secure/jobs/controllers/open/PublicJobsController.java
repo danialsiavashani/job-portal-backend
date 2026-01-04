@@ -33,6 +33,7 @@ public class PublicJobsController {
             @RequestParam(required = false) BigDecimal maxPay,
             @RequestParam(required = false) Long companyId,
             @RequestParam(required = false) String location,
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate from,
             @RequestParam(required = false)

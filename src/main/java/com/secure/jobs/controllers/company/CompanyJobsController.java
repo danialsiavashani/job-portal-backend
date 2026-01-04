@@ -47,9 +47,9 @@ public class CompanyJobsController {
             @PathVariable Long jobId,
             @RequestBody @Valid UpdateJobRequest request
     ) {
-        Job job = jobService.updateJob(user.getId(), jobId, request);
-        return JobMapper.toResponse(job);
+        return jobService.updateJob(user.getId(), jobId, request);
     }
+
 
     @DeleteMapping("/{jobId}")
     @PreAuthorize("hasRole('COMPANY')")
@@ -60,13 +60,12 @@ public class CompanyJobsController {
 
     @PatchMapping("/{jobId}/status")
     @PreAuthorize("hasRole('COMPANY')")
-    public ResponseEntity<?> changeJobStatus(
+    public ChangeJobStatusResponse changeJobStatus(
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long jobId,
             @RequestBody @Valid ChangeJobStatusRequest request
     ) {
-        jobService.changeStatus(user.getId(), jobId, request.status());
-        return ResponseEntity.ok("Job status updated successfully.");
+        return jobService.changeStatus(user.getId(), jobId, request.status());
     }
 
     @GetMapping
@@ -135,8 +134,4 @@ public class CompanyJobsController {
                 from,
                 to);
     }
-
-
-
-
 }

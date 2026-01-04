@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
                 )
         },
         indexes = {
+                @Index(name = "idx_job_app_user_created_at", columnList = "user_id, created_at"),
                 @Index(name = "idx_job_app_company_created_at", columnList = "company_id, created_at"),
                 @Index(name = "idx_job_app_company_status_created_at", columnList = "company_id, status, created_at")
         }

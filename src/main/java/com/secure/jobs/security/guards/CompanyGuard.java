@@ -26,7 +26,6 @@ public class CompanyGuard {
     public void requireEnabled(Company company) {
         if (company == null) throw new ResourceNotFoundException("Company not found");
         if (!company.isEnabled()) {
-            // use your ApiException if you prefer — just keep status = 403
             throw new ApiException("Company is disabled", HttpStatus.FORBIDDEN);
         }
     }

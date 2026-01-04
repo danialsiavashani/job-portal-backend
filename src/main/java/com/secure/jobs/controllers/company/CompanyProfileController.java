@@ -20,8 +20,7 @@ public class CompanyProfileController {
     @GetMapping
     @PreAuthorize("hasRole('COMPANY')")
     public CompanyProfileResponse getCompanyProfile(@AuthenticationPrincipal UserDetailsImpl user){
-        Company company = companyService.getCompanyProfile(user.getId());
-        return CompanyProfileMapper.toResponse(company);
+        return companyService.getCompanyProfile(user.getId());
     }
 
 }

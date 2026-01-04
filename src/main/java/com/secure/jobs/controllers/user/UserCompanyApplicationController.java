@@ -30,13 +30,12 @@ public class UserCompanyApplicationController {
             @RequestBody @Valid CompanyApplicationRequest request
     ) {
         Long userId = userDetails.getId();
-        CompanyApplication app = companyApplicationService.apply(
+        return companyApplicationService.apply(
                 userId,
                 request.companyName(),
                 request.documentPublicId(),
                 request.documentUrl()
         );
-        return  CompanyApplicationMapper.toResponse(app);
     }
 
     @GetMapping("/me")
@@ -44,11 +43,7 @@ public class UserCompanyApplicationController {
     public CompanyApplicationResponse myApplication(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        return CompanyApplicationMapper.toResponse(
-                companyApplicationService.findMyApplication(
-                        userDetails.getId()
-                )
-        );
+        return companyApplicationService.findMyApplication(userDetails.getId());
     }
 
 

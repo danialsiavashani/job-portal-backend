@@ -2,9 +2,12 @@ package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationResponse;
+import com.secure.jobs.dto.user.WithdrawJobApplicationResponse;
 import com.secure.jobs.mappers.JobApplicationMapper;
+import com.secure.jobs.mappers.UserMapper;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.JobApplicationService;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +33,11 @@ public class UserJobApplicationController {
 
     @PostMapping("/jobs/{jobId}/apply")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<JobApplicationResponse> apply(
+    public JobApplicationResponse apply(
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long jobId
     ) {
-        JobApplication app = jobApplicationService.apply(user.getId(), jobId);
-        return ResponseEntity.status(201).body(JobApplicationMapper.toResponse(app));
+        return jobApplicationService.apply(user.getId(), jobId);
     }
 
     @GetMapping("/job-applications/me")
@@ -69,12 +71,12 @@ public class UserJobApplicationController {
 
     @PatchMapping("/job-applications/{applicationId}/withdraw")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> withdrawMyJobApplication(
+    public WithdrawJobApplicationResponse withdrawMyJobApplication(
             @PathVariable Long applicationId,
-            @AuthenticationPrincipal UserDetailsImpl user
+            @AuthenticationPrincipal UserDetailsImpl userDetails
             ){
-         jobApplicationService.withdrawFromJobApplication( applicationId,user.getId());
-        return ResponseEntity.noContent().build();
+        JobApplication application = jobApplicationService.withdrawFromJobApplication( applicationId,userDetails.getId());
+        return UserMapper.toWithdrawResponse(application);
     }
 
 

@@ -1,9 +1,6 @@
 package com.secure.jobs.services;
 
-import com.secure.jobs.dto.job.CreateJobRequest;
-import com.secure.jobs.dto.job.JobPageResponse;
-import com.secure.jobs.dto.job.JobResponse;
-import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.dto.job.*;
 import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.models.job.Job;
 
@@ -20,7 +17,8 @@ public interface JobService {
 
     Job createJob(Long userId, CreateJobRequest request);
 
-    Job updateJob(Long userId, Long jobId, UpdateJobRequest request);
+    JobResponse updateJob(Long userId, Long jobId, UpdateJobRequest request);
+
 
     void deleteJob(Long userId, Long jobId);
 
@@ -49,7 +47,7 @@ public interface JobService {
             LocalDate to
     );
 
-    void changeStatus(Long userId, Long jobId, @NotNull JobStatus status);
+    ChangeJobStatusResponse changeStatus(Long userId, Long jobId, @NotNull JobStatus status);
 
     JobResponse getPublishedJobById(Long jobId);
 }

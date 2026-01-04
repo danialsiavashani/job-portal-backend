@@ -45,7 +45,7 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
     @Override
     @Transactional
-    public CompanyApplication apply(
+    public CompanyApplicationResponse apply(
             Long userId,
             String companyName,
             String documentPublicId,
@@ -73,8 +73,8 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
             existing.setDocumentPublicId(documentPublicId);
             existing.setDocumentUrl(documentUrl);
             existing.setStatus(CompanyApplicationStatus.PENDING);
-
-            return companyApplicationRepository.save(existing);
+            CompanyApplication saved = companyApplicationRepository.save(existing);
+            return CompanyApplicationMapper.toResponse(saved);
         }
 
         // First-time apply -> create a new row
@@ -85,8 +85,8 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
                 .documentUrl(documentUrl)
                 .status(CompanyApplicationStatus.PENDING)
                 .build();
-
-        return companyApplicationRepository.save(application);
+        CompanyApplication saved = companyApplicationRepository.save(application);
+        return CompanyApplicationMapper.toResponse(saved);
     }
 
 
@@ -187,15 +187,16 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
 
     @Override
     @Transactional(readOnly = true)
-    public CompanyApplication findMyApplication(Long userId) {
+    public CompanyApplicationResponse findMyApplication(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return companyApplicationRepository.findByUser(user)
+        CompanyApplication app = companyApplicationRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No company application found for this user"
                 ));
+        return CompanyApplicationMapper.toResponse(app);
     }
 
     @Transactional(readOnly = true)

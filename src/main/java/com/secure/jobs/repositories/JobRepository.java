@@ -38,7 +38,11 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
     """)
     Optional<Job> findByIdWithCompany(Long id);
 
-    @EntityGraph(attributePaths = {"company"})
+
+    @EntityGraph(attributePaths = {
+            "company",
+            "degreeFields"
+    })
     Page<Job> findAll(Specification<Job> spec, Pageable pageable);
 
     @Query("""

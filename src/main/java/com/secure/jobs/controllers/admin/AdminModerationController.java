@@ -1,7 +1,12 @@
 package com.secure.jobs.controllers.admin;
 
 import com.secure.jobs.dto.admin.UpdateCompanyEnabledRequest;
+import com.secure.jobs.dto.admin.UpdateCompanyEnabledResponse;
 import com.secure.jobs.dto.admin.UpdateUserModerationRequest;
+import com.secure.jobs.dto.admin.UpdateUserModerationResponse;
+import com.secure.jobs.mappers.AdminModerationMapper;
+import com.secure.jobs.models.company.Company;
+import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.services.CompanyService;
 import com.secure.jobs.services.UserService;
 import jakarta.validation.Valid;
@@ -20,22 +25,19 @@ public class AdminModerationController {
 
 
     @PatchMapping("/users/{userId}/moderation")
-    public ResponseEntity<Void> patchUserModeration(
+    public UpdateUserModerationResponse patchUserModeration(
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserModerationRequest request
     ){
-        userService.patchModeration(userId, request);
-        return  ResponseEntity.noContent().build();
+        return userService.patchModeration(userId, request);
     }
 
     @PatchMapping("/companies/{companyId}/enabled")
-    public ResponseEntity<Void> patchCompanyEnabled(
+    public UpdateCompanyEnabledResponse patchCompanyEnabled(
             @PathVariable Long companyId,
             @Valid @RequestBody UpdateCompanyEnabledRequest  request
             ){
-        companyService.setEnabled(companyId, request.getEnabled());
-        return ResponseEntity.noContent().build();
+        return companyService.setEnabled(companyId, request.getEnabled());
     }
-
 
 }

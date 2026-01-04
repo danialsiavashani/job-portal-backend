@@ -23,22 +23,16 @@ public class DegreeFieldAdminController {
 
     @PostMapping
     public DegreeFieldResponse create(@Valid @RequestBody DegreeFieldCreateRequest request) {
-        return DegreeFieldMapper.toResponse(
-                degreeFieldService.create(request)
-        );
+        return degreeFieldService.create(request);
     }
 
     @PatchMapping("/{id}")
-    public DegreeFieldResponse update(@PathVariable Long id, @RequestBody DegreeFieldUpdateRequest request) {
-        return DegreeFieldMapper.toResponse(
-                degreeFieldService.update(id, request)
-        );
+    public DegreeFieldResponse update(@PathVariable Long id,@Valid  @RequestBody DegreeFieldUpdateRequest request) {
+        return degreeFieldService.update(id, request);
     }
 
     @GetMapping
     public List<DegreeFieldResponse> listAll() {
-        return DegreeFieldMapper.toResponseList(
-                degreeFieldService.findAll()
-        );
+        return degreeFieldService.findAll();
     }
 }

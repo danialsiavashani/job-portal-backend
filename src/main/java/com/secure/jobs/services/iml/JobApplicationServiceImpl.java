@@ -3,6 +3,7 @@ package com.secure.jobs.services.iml;
 import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationResponse;
+import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.CompanyJobApplicationMapper;
@@ -21,6 +22,7 @@ import com.secure.jobs.specifications.UserJobsApplicationsSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
 
 
     @Override
-    public JobApplication apply(Long userId, Long jobId) {
+    public JobApplicationResponse apply(Long userId, Long jobId) {
 
         Job job = jobRepository.findPublishedEnabledByIdWithCompanyAndDegreeFields(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
@@ -57,7 +59,8 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
         // ✅ duplicate protection
         boolean alreadyApplied = jobApplicationRepository.existsByJob_IdAndUser_UserId(jobId, userId);
         if (alreadyApplied) {
-            throw new BadRequestException("You already applied to this job.");
+            throw new ApiException("You already applied to this job.",HttpStatus.CONFLICT);
+
         }
 
         // ✅ profile must exist + be complete
@@ -73,8 +76,8 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
                 .build();
 
         job.incrementApplicants();
-
-        return jobApplicationRepository.save(app);
+        JobApplication saved = jobApplicationRepository.save(app);
+        return JobApplicationMapper.toResponse(saved);
     }
 
 
@@ -121,7 +124,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
     }
 
     @Override
-    public CompanyJobApplicationRowResponse updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
+    public JobApplication updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
         JobApplication application = jobApplicationGuard.requireCompanyOwnedEnabledPendingApplication(applicationId, companyOwnerUserId);
 
         if(newStatus != JobApplicationStatus.INTERVIEW &&
@@ -135,13 +138,14 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
 
         jobApplicationRepository.save(application);
 
-        return CompanyJobApplicationMapper.toResponse(application);
+        return application;
     }
 
     @Override
-    public void withdrawFromJobApplication( Long applicationId, Long userId) {
+    public JobApplication withdrawFromJobApplication( Long applicationId, Long userId) {
         JobApplication app = userGuard.requireUserOwnedPendingApplication(applicationId, userId);
         app.setStatus(JobApplicationStatus.WITHDRAWN);
+        return app;
     }
 
 }

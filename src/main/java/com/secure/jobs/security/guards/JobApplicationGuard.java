@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,4 +40,11 @@ public class JobApplicationGuard {
 
         return app;
     }
+
+    public static final Set<JobApplicationStatus> ACTIVE_STATUSES = Set.of(
+            JobApplicationStatus.PENDING,
+            JobApplicationStatus.INTERVIEW
+            // add VIEWED/OFFER later if you have them
+    );
+
 }

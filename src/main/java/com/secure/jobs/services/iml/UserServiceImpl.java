@@ -1,8 +1,10 @@
 package com.secure.jobs.services.iml;
 
 import com.secure.jobs.dto.admin.UpdateUserModerationRequest;
+import com.secure.jobs.dto.admin.UpdateUserModerationResponse;
 import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.AdminModerationMapper;
 import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.services.UserService;
@@ -27,7 +29,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void patchModeration(Long userId, UpdateUserModerationRequest request) {
+    public UpdateUserModerationResponse patchModeration(Long userId, UpdateUserModerationRequest request) {
             User user = userRepository.findById(userId)
                     .orElseThrow(()-> new ResourceNotFoundException("User Not Found"));
             boolean changed = false;
@@ -43,6 +45,6 @@ public class UserServiceImpl implements UserService {
         if (!changed) {
             throw new ApiException("No moderation fields provided", HttpStatus.BAD_REQUEST);
         }
-
+return AdminModerationMapper.toUserModerationResponse(user);
     }
 }

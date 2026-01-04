@@ -1,7 +1,11 @@
 package com.secure.jobs.services.iml;
 
+import com.secure.jobs.dto.admin.UpdateCompanyEnabledResponse;
+import com.secure.jobs.dto.company.CompanyProfileResponse;
 import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
+import com.secure.jobs.mappers.AdminModerationMapper;
+import com.secure.jobs.mappers.CompanyProfileMapper;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.repositories.CompanyRepository;
 import com.secure.jobs.security.guards.CompanyGuard;
@@ -21,15 +25,17 @@ public class CompanyServiceIml implements CompanyService {
 
 
     @Override
-    public Company getCompanyProfile(Long userId) {
+    public CompanyProfileResponse getCompanyProfile(Long userId) {
 
-        return companyRepository.findByOwner_UserId(userId)
+        Company company = companyRepository.findByOwner_UserId(userId)
                 .orElseThrow(()->new  ResourceNotFoundException("User not found"));
+       return CompanyProfileMapper.toResponse(company);
     }
 
     @Override
-    public void setEnabled(Long companyId, Boolean enabled) {
+    public UpdateCompanyEnabledResponse setEnabled(Long companyId, Boolean enabled) {
         Company company = companyGuard.requireCompanyById(companyId);
         company.setEnabled(enabled);
+        return AdminModerationMapper.toCompanyModerationResponse(company);
     }
 }

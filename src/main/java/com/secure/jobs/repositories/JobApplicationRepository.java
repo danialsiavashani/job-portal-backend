@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,10 +21,13 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
 
     // OPTIONAL but recommended for /me list so mapper has job+company without N+1:
 
-    @EntityGraph(
-            attributePaths = {"job", "job.company", "user"},
-            type = EntityGraph.EntityGraphType.FETCH
-    )
+    @EntityGraph(attributePaths = {
+            "job",
+            "job.company",
+            "user",
+            "user.candidateProfile",
+            "user.candidateProfile.degreeField"
+    })
     Page<JobApplication> findAll(Specification<JobApplication> spec, Pageable pageable);
 
     @EntityGraph(attributePaths = {"job", "user", "company"})
@@ -41,6 +45,7 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
 
     boolean existsByJob_Id(Long jobId);
 
+    boolean existsByUser_UserIdAndStatusIn(Long userId, Collection<JobApplicationStatus> statuses);
 
     Optional<JobApplication> findByIdAndUser_UserId(
             @Param("userId") Long userId,

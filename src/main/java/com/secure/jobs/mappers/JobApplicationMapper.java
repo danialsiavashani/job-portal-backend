@@ -1,6 +1,7 @@
 package com.secure.jobs.mappers;
 
 import com.secure.jobs.dto.job.JobApplicationResponse;
+import com.secure.jobs.dto.job.UpdateJobApplicationStatusResponse;
 import com.secure.jobs.models.job.JobApplication;
 
 public class JobApplicationMapper {
@@ -15,6 +16,14 @@ public class JobApplicationMapper {
                 app.getJob().getCompany().getName(),
                 app.getStatus(),
                 app.getCreatedAt()
+        );
+    }
+
+    public static UpdateJobApplicationStatusResponse toUpdateStatusResponse(JobApplication app){
+        return new UpdateJobApplicationStatusResponse(
+                app.getId(),
+                app.getStatus(),
+                app.getUpdatedAt()
         );
     }
 }

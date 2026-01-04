@@ -1,11 +1,12 @@
 package com.secure.jobs.mappers;
 
-import com.secure.jobs.dto.job.CreateJobRequest;
-import com.secure.jobs.dto.job.JobResponse;
-import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.dto.job.*;
 import com.secure.jobs.models.company.Company;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.user.profile.DegreeField;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 
@@ -33,7 +34,15 @@ public class JobMapper {
     }
 
     public static JobResponse toResponse(Job job) {
-        // safe if company is already loaded; otherwise fetch-join on read endpoints (see section 5)
+
+        List<String> benefits = job.getBenefits() != null
+                ? new ArrayList<>(job.getBenefits())
+                : List.of();
+
+        List<String> minimumRequirements = job.getMinimumRequirements() != null
+                ? new ArrayList<>(job.getMinimumRequirements())
+                : List.of();
+
         return new JobResponse(
                 job.getId(),
                 job.getTitle(),
@@ -46,8 +55,8 @@ public class JobMapper {
                 job.getPayPeriod(),
                 job.getPayType(),
                 job.getLocation(),
-                job.getBenefits(),
-                job.getMinimumRequirements(),
+                benefits,
+                minimumRequirements,
                 job.getDegreeFields(),
                 job.getStatus(),
                 job.getCompany().getName(),
@@ -68,19 +77,31 @@ public class JobMapper {
         if (req.payType() != null) job.setPayType(req.payType());
         if (req.location() != null) job.setLocation(req.location());
 
+        // ✅ only overwrite if provided
         if (req.benefits() != null) {
             job.getBenefits().clear();
             job.getBenefits().addAll(req.benefits());
-        }
-        if(req.degreeFieldIds() != null){
-            job.setDegreeFields(degreeFields);
         }
 
         if (req.minimumRequirements() != null) {
             job.getMinimumRequirements().clear();
             job.getMinimumRequirements().addAll(req.minimumRequirements());
         }
+
+        if (req.degreeFieldIds() != null) {
+            job.setDegreeFields(degreeFields);
+        }
     }
+
+
+    public static ChangeJobStatusResponse toChangeStatusResponse(Job job){
+
+        return new ChangeJobStatusResponse(
+          job.getId(),
+          job.getStatus()
+        );
+    }
+
 
 
 }

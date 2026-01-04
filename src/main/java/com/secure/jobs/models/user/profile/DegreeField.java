@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "degree_fields")
+@Table(
+        name = "degree_fields",
+        indexes = @Index(name="uk_degree_field_name", columnList="name", unique=true)
+)
+
 @Getter
 @Setter
 @NoArgsConstructor

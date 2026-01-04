@@ -8,6 +8,7 @@ import com.secure.jobs.mappers.CandidateProfileMapper;
 import com.secure.jobs.security.services.UserDetailsImpl;
 
 import com.secure.jobs.services.CandidateProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,9 +24,7 @@ public class CandidateProfileController {
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public CandidateProfileResponse getMyProfile(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return CandidateProfileMapper.toResponse(
-                candidateProfileService.getOrCreate(userDetails.getId())
-        );
+        return candidateProfileService.getOrCreate(userDetails.getId());
     }
 
     @PatchMapping
@@ -34,20 +33,16 @@ public class CandidateProfileController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody CandidateProfileUpdateRequest request
     ) {
-        return CandidateProfileMapper.toResponse(
-                candidateProfileService.update(userDetails.getId(), request)
-        );
+        return candidateProfileService.update(userDetails.getId(), request);
     }
 
     @PutMapping("/resume")
     @PreAuthorize("hasRole('USER')")
     public CandidateProfileResponse updateMyResume(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody CandidateProfileResumeUpdateRequest request
+            @Valid @RequestBody CandidateProfileResumeUpdateRequest request
     ) {
-        return CandidateProfileMapper.toResponse(
-                candidateProfileService.updateResume(userDetails.getId(), request)
-        );
+        return candidateProfileService.updateResume(userDetails.getId(), request);
     }
-
 }
+

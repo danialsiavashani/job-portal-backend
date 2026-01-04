@@ -1,9 +1,6 @@
 package com.secure.jobs.services.iml;
 
-import com.secure.jobs.dto.job.CreateJobRequest;
-import com.secure.jobs.dto.job.JobPageResponse;
-import com.secure.jobs.dto.job.JobResponse;
-import com.secure.jobs.dto.job.UpdateJobRequest;
+import com.secure.jobs.dto.job.*;
 import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
@@ -60,13 +57,17 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job updateJob(Long userId, Long jobId, UpdateJobRequest request){
-        Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
+    @Transactional
+    public JobResponse updateJob(Long userId, Long jobId, UpdateJobRequest request) {
+
+        Job job = jobGuard.requireOwnedActiveCompanyJob(userId, jobId);
         jobPayValidator.validateForUpdate(job, request);
         Set<DegreeField> degreeFields = resolveDegreeFields(request.degreeFieldIds());
         JobMapper.updateEntity(job, request, degreeFields);
-        return jobRepository.save(job);
+        Job saved = jobRepository.save(job);
+        return JobMapper.toResponse(saved); // ✅ inside transaction
     }
+
 
     @Override
     public void deleteJob(Long userId, Long jobId) {
@@ -124,6 +125,7 @@ public class JobServiceImpl implements JobService {
         if (maxPay != null) {
             spec = spec.and(CompanyJobsSpecifications.payMaxAtMost(maxPay));
         }
+
 
         Page<Job> page = jobRepository.findAll(
                 spec,
@@ -210,24 +212,22 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void changeStatus(Long userId, Long jobId, JobStatus newStatus) {
+    public ChangeJobStatusResponse changeStatus(Long userId, Long jobId, JobStatus newStatus) {
         Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
         // Allowed transitions only
         if (job.getStatus() == JobStatus.DRAFT && newStatus == JobStatus.PUBLISHED) {
             job.setStatus(JobStatus.PUBLISHED);
-            return;
+            return JobMapper.toChangeStatusResponse(job);
         }
 
         if (job.getStatus() == JobStatus.PUBLISHED && newStatus == JobStatus.DRAFT) {
             job.setStatus(JobStatus.DRAFT);
-            return;
+            return JobMapper.toChangeStatusResponse(job);
         }
 
         throw new BadRequestException(
                 "Invalid status transition: " + job.getStatus() + " → " + newStatus
         );
-
-
     }
 
     @Override
