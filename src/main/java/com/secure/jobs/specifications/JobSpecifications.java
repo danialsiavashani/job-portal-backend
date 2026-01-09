@@ -3,6 +3,10 @@ package com.secure.jobs.specifications;
 import com.secure.jobs.models.job.EmploymentType;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobStatus;
+import com.secure.jobs.models.job.SavedJob;
+import com.secure.jobs.models.user.auth.User;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -16,6 +20,37 @@ public class JobSpecifications {
         return (root, query, cb) ->
                 cb.equal(root.get("status"), JobStatus.PUBLISHED);
     }
+
+    public static Specification<Job> isSavedByUser(Long userId) {
+        return (root, query, cb) -> {
+            if (userId == null) return cb.conjunction();
+
+            // count query
+            if (Long.class.equals(query.getResultType()) || long.class.equals(query.getResultType())) {
+                var sq = query.subquery(Long.class);
+                var sj = sq.from(SavedJob.class);
+                sq.select(cb.literal(1L))
+                        .where(
+                                cb.equal(sj.get("job"), root),
+                                cb.equal(sj.get("user").get("userId"), userId)
+                        );
+                return cb.exists(sq);
+            }
+
+            var sj = root.join("savedJobs", JoinType.INNER);
+
+            // only set default ordering if caller didn't set one
+            if (query.getOrderList() == null || query.getOrderList().isEmpty()) {
+                query.orderBy(
+                        cb.desc(sj.get("createdAt")),
+                        cb.desc(root.get("id")) // tie-breaker
+                );
+            }
+
+            return cb.equal(sj.get("user").get("userId"), userId);
+        };
+    }
+
 
     public static Specification<Job> isCompanyEnabled() {
         return (root, query, cb) -> cb.isTrue(root.get("company").get("enabled"));

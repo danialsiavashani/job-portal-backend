@@ -38,6 +38,9 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
     """)
     Optional<Job> findByIdWithCompany(Long id);
 
+    @EntityGraph(attributePaths = "company")
+    Optional<Job> findByIdAndCompany_Owner_UserId(Long id, Long ownerUserId);
+
 
     @EntityGraph(attributePaths = {
             "company",

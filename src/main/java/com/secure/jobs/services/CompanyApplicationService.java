@@ -6,6 +6,7 @@ import com.secure.jobs.dto.company.CompanyJobApplicationPageResponse;
 import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.user.profile.EducationLevel;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +31,7 @@ public interface CompanyApplicationService {
             JobApplicationStatus status,
             BigDecimal minYears,
             Long degreeFieldId,
-            String educationLevel,
+            EducationLevel educationLevel,
             LocalDate from,
             LocalDate to
     );

@@ -1,18 +1,18 @@
 package com.secure.jobs.services.iml;
 
-import com.secure.jobs.dto.company.CompanyJobApplicationRowResponse;
 import com.secure.jobs.dto.job.JobApplicationPageResponse;
 import com.secure.jobs.dto.job.JobApplicationResponse;
 import com.secure.jobs.exceptions.ApiException;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
-import com.secure.jobs.mappers.CompanyJobApplicationMapper;
 import com.secure.jobs.mappers.JobApplicationMapper;
+import com.secure.jobs.models.job.JobApplicationStatusAudits;
 import com.secure.jobs.models.user.auth.User;
 import com.secure.jobs.models.job.Job;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
 import com.secure.jobs.repositories.JobApplicationRepository;
+import com.secure.jobs.repositories.JobApplicationStatusAuditRepository;
 import com.secure.jobs.repositories.JobRepository;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.security.guards.*;
@@ -38,7 +38,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private final JobApplicationRepository jobApplicationRepository;
-    private final CompanyGuard companyGuard;
+    private final JobApplicationStatusAuditRepository auditRepository;
     private final JobApplicationGuard jobApplicationGuard;
     private final UserGuard userGuard;
     private final CandidateProfileService candidateProfileService;
@@ -127,25 +127,63 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
     public JobApplication updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
         JobApplication application = jobApplicationGuard.requireCompanyOwnedEnabledPendingApplication(applicationId, companyOwnerUserId);
 
-        if(newStatus != JobApplicationStatus.INTERVIEW &&
-            newStatus != JobApplicationStatus.REJECTED &&
-                newStatus != JobApplicationStatus.HIRED
-        ){
-            throw new  BadRequestException("Invalid status transition");
+        JobApplicationStatus current = application.getStatus();
+
+        if (!isValidCompanyTransition(current, newStatus)) {
+            throw new ApiException(
+                    "Invalid status transition: " + current + " -> " + newStatus,
+                    HttpStatus.BAD_REQUEST
+            );
         }
 
         application.setStatus(newStatus);
 
         jobApplicationRepository.save(application);
 
+        auditRepository.save(JobApplicationStatusAudits.builder()
+                .applicationId(application.getId())
+                .companyId(application.getCompany().getId())
+                .actorUserId(companyOwnerUserId)
+                .fromStatus(current)
+                .toStatus(newStatus)
+                .note(null)
+                .build()
+        );
+
         return application;
     }
 
     @Override
     public JobApplication withdrawFromJobApplication( Long applicationId, Long userId) {
-        JobApplication app = userGuard.requireUserOwnedPendingApplication(applicationId, userId);
+        JobApplication app = userGuard.requireUserOwnedWithdrawApplication(applicationId, userId);
+
+        JobApplicationStatus from = app.getStatus();
+
         app.setStatus(JobApplicationStatus.WITHDRAWN);
-        return app;
+        JobApplication saved = jobApplicationRepository.save(app);
+
+        auditRepository.save(JobApplicationStatusAudits.builder()
+                .applicationId(saved.getId())
+                .companyId(saved.getCompany().getId())
+                .actorUserId(userId)
+                .fromStatus(from)
+                .toStatus(JobApplicationStatus.WITHDRAWN)
+                .note(null)
+                .build());
+        return saved;
+    }
+
+
+    private boolean isValidCompanyTransition(JobApplicationStatus current, JobApplicationStatus next) {
+        if (next == null) return false;
+        if (current == next) return true; // or false if you want to forbid no-op
+
+        return switch (current) {
+            case PENDING -> next == JobApplicationStatus.INTERVIEW || next == JobApplicationStatus.REJECTED;
+            case INTERVIEW -> next == JobApplicationStatus.HIRED || next == JobApplicationStatus.REJECTED;
+            case REJECTED, HIRED -> false;
+            default -> false;
+        };
     }
 
 }

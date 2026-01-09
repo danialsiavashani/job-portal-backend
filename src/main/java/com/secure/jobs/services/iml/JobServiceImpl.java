@@ -213,7 +213,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public ChangeJobStatusResponse changeStatus(Long userId, Long jobId, JobStatus newStatus) {
-        Job job = jobGuard.requireOwnedActiveCompanyJob(userId,jobId);
+        Job job = jobGuard.requireOwnedActiveCompanyJob(jobId,userId);
         // Allowed transitions only
         if (job.getStatus() == JobStatus.DRAFT && newStatus == JobStatus.PUBLISHED) {
             job.setStatus(JobStatus.PUBLISHED);

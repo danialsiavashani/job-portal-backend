@@ -18,7 +18,9 @@ import com.secure.jobs.models.company.CompanyApplication;
 import com.secure.jobs.models.company.CompanyApplicationStatus;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.user.profile.EducationLevel;
 import com.secure.jobs.repositories.*;
+import com.secure.jobs.security.guards.JobGuard;
 import com.secure.jobs.services.CompanyApplicationService;
 import com.secure.jobs.specifications.AdminCompanyApplicationsSpecifications;
 import com.secure.jobs.specifications.CompanyJobApplicationSpecification;
@@ -42,6 +44,7 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private  final JobGuard jobGuard;
 
     @Override
     @Transactional
@@ -208,7 +211,7 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
             JobApplicationStatus status,
             BigDecimal minYears,
             Long degreeFieldId,
-            String educationLevel,
+            EducationLevel educationLevel,
             LocalDate from,
             LocalDate to
     ) {
@@ -258,6 +261,7 @@ public class CompanyApplicationServiceImpl implements CompanyApplicationService 
             LocalDate from,
             LocalDate to
     ) {
+        jobGuard.requireOwnedActiveCompanyJob(jobId, companyUserId);
 
         Specification<JobApplication> spec =
                 Specification.where(CompanyJobApplicationSpecification.belongsToCompany(companyUserId))

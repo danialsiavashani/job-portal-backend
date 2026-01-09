@@ -7,6 +7,7 @@ import com.secure.jobs.dto.job.UpdateJobApplicationStatusResponse;
 import com.secure.jobs.mappers.JobApplicationMapper;
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.user.profile.EducationLevel;
 import com.secure.jobs.security.services.UserDetailsImpl;
 import com.secure.jobs.services.CompanyApplicationService;
 import com.secure.jobs.services.JobApplicationService;
@@ -62,7 +63,7 @@ public class CompanyJobApplicationController {
             @RequestParam(required = false)
             Long degreeFieldId,
             @RequestParam(required = false)
-            String educationLevel,
+            EducationLevel educationLevel,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate from,

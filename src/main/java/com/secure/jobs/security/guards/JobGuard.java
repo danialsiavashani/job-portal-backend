@@ -16,12 +16,13 @@ public class JobGuard {
     private final JobRepository jobRepository;
     private final CompanyGuard companyGuard;
 
-    public Job requireOwnedActiveCompanyJob(Long userId, Long jobId) {
-        Job job = jobRepository.findById(jobId)
+    public Job requredCompanyOwnedJob(Long jobId, Long companyOwnedUserId){
+        return  jobRepository.findByIdAndCompany_Owner_UserId(jobId, companyOwnedUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-        if (!job.getCompany().getOwner().getUserId().equals(userId)) {
-            throw new AccessDeniedException("You do not own this job");
-        }
+    }
+
+    public Job requireOwnedActiveCompanyJob(Long jobId, Long companyOwnerUserId) {
+        Job job = requredCompanyOwnedJob(jobId, companyOwnerUserId);
         companyGuard.requireEnabled(job.getCompany());
         return job;
     }

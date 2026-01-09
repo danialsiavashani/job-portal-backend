@@ -5,9 +5,6 @@ import lombok.Data;
 
 @Data
 public class CandidateProfileResumeUpdateRequest {
-    @NotBlank
     private String resumeUrl;
-
-    @NotBlank
     private String resumePublicId;
 }

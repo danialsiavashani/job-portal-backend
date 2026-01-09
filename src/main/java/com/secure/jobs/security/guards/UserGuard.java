@@ -25,5 +25,23 @@ public class UserGuard {
         }
         return app;
         }
+
+
+    public JobApplication requireUserOwnedWithdrawApplication(Long applicationId, Long userId) {
+        JobApplication app = jobApplicationRepository.findByIdAndUser_UserId(applicationId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        if (app.getStatus() != JobApplicationStatus.PENDING
+                && app.getStatus() != JobApplicationStatus.INTERVIEW) {
+            throw new ApiException(
+                    "Only PENDING or INTERVIEW applications can be withdrawn",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        return app;
     }
+
+
+}
 

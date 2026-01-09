@@ -2,6 +2,7 @@ package com.secure.jobs.specifications;
 
 import com.secure.jobs.models.job.JobApplication;
 import com.secure.jobs.models.job.JobApplicationStatus;
+import com.secure.jobs.models.user.profile.EducationLevel;
 import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -60,12 +61,12 @@ public class CompanyJobApplicationSpecification {
         };
     }
 
-    public static Specification<JobApplication> hasEducationLevel(String level) {
+    public static Specification<JobApplication> hasEducationLevel(EducationLevel level) {
         return (root, query, cb) -> {
-            if (level == null || level.isBlank()) return cb.conjunction();
+            if (level == null) return cb.conjunction();
             var user = root.join("user");
             var profile = user.join("candidateProfile", jakarta.persistence.criteria.JoinType.LEFT);
-            return cb.equal(profile.get("educationLevel"), Enum.valueOf(com.secure.jobs.models.user.profile.EducationLevel.class, level));
+            return cb.equal(profile.get("educationLevel"), level);
         };
     }
 

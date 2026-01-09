@@ -106,6 +106,12 @@ public class Job {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<String> minimumRequirements = new ArrayList<>();
 
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
+    private Set<SavedJob> savedJobs = new HashSet<>();
+
     public void incrementApplicants() {
         this.numberOfApplicants++;
     }

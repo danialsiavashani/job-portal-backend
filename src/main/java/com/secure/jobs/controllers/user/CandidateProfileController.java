@@ -1,4 +1,4 @@
-package com.secure.jobs.controllers.user.profile;
+package com.secure.jobs.controllers.user;
 
 import com.secure.jobs.dto.profile.CandidateProfileResponse;
 import com.secure.jobs.dto.profile.CandidateProfileResumeUpdateRequest;

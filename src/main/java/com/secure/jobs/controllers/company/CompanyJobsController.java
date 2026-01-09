@@ -114,6 +114,7 @@ public class CompanyJobsController {
             @PathVariable Long jobId,
             @RequestParam(required = false)
             JobApplicationStatus status,
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate from,
             @RequestParam(required = false)

@@ -31,13 +31,7 @@ public class JobApplicationGuard {
             Long companyOwnerUserId
     ) {
         JobApplication app = requireCompanyOwnedApplication(applicationId, companyOwnerUserId);
-
         companyGuard.requireEnabled(app.getCompany());
-
-        if (app.getStatus() != JobApplicationStatus.PENDING) {
-            throw new ApiException("Only PENDING applications can be updated", HttpStatus.BAD_REQUEST);
-        }
-
         return app;
     }
 
