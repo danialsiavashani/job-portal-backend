@@ -16,13 +16,13 @@ public class JobGuard {
     private final JobRepository jobRepository;
     private final CompanyGuard companyGuard;
 
-    public Job requredCompanyOwnedJob(Long jobId, Long companyOwnedUserId){
+    public Job requireCompanyOwnedJob(Long jobId, Long companyOwnedUserId){
         return  jobRepository.findByIdAndCompany_Owner_UserId(jobId, companyOwnedUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
     }
 
     public Job requireOwnedActiveCompanyJob(Long jobId, Long companyOwnerUserId) {
-        Job job = requredCompanyOwnedJob(jobId, companyOwnerUserId);
+        Job job = requireCompanyOwnedJob(jobId, companyOwnerUserId);
         companyGuard.requireEnabled(job.getCompany());
         return job;
     }

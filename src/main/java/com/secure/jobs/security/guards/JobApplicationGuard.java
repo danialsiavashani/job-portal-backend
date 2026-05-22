@@ -26,7 +26,7 @@ public class JobApplicationGuard {
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
     }
 
-    public JobApplication requireCompanyOwnedEnabledPendingApplication(
+    public JobApplication requireCompanyOwnedEnabledApplication(
             Long applicationId,
             Long companyOwnerUserId
     ) {
