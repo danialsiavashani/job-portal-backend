@@ -24,11 +24,12 @@ public interface SavedJobRepository extends JpaRepository<SavedJob, Long>, JpaSp
 
     void deleteByUser_UserIdAndJob_Id(Long userId, Long jobId);
 
+    @Override
     @EntityGraph(attributePaths = {
-            "user",
-            "job"
+            "job",
+            "job.company"
     })
-    Page<SavedJob> findAll(Pageable pageable);
+    Page<SavedJob> findAll(Specification<SavedJob> spec ,Pageable pageable);
 
     @Query("select sj.job.id from SavedJob sj where sj.user.userId = :userId")
     List<Long> findSavedJobIdsByUserId(@Param("userId") Long userId);

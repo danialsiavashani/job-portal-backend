@@ -1,8 +1,6 @@
 package com.secure.jobs.auth;
 
-import com.secure.jobs.auth.dto.LoginRequest;
-import com.secure.jobs.auth.dto.LoginResponse;
-import com.secure.jobs.auth.dto.RegisterRequest;
+import com.secure.jobs.auth.dto.*;
 import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.exceptions.UnauthorizedException;
@@ -13,6 +11,7 @@ import com.secure.jobs.repositories.RoleRepository;
 import com.secure.jobs.repositories.UserRepository;
 import com.secure.jobs.security.jwt.JwtUtils;
 import com.secure.jobs.security.services.UserDetailsImpl;
+import com.secure.jobs.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +48,8 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+    private final UserService userService;
 
 
     @PostMapping("/register")
@@ -111,6 +112,18 @@ public class AuthController {
         } catch (AuthenticationException ex) {
              throw new UnauthorizedException(ex.getMessage() + ", Invalid username or password");
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        userService.generatePasswordResetToken(req.email());
+        return ResponseEntity.noContent().build(); // always
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        userService.resetPassword(req.token(), req.newPassword());
+        return ResponseEntity.noContent().build();
     }
 
 

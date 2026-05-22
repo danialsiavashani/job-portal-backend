@@ -79,24 +79,13 @@ public class SavedJobServiceIml implements SavedJobService {
             Long userId,
             Pageable locked,
             String keyword,
-            String location,
-            EmploymentType employmentType,
-            BigDecimal minPay,
-            BigDecimal maxPay,
-            Long companyId,
             LocalDate from,
             LocalDate to
     ) {
         Specification<SavedJob> spec = SavedJobSpecifications.belongsToUser(userId)
                 .and(SavedJobSpecifications.savedBetween(from, to))
-                .and(SavedJobSpecifications.jobIsPublished())
-                .and(SavedJobSpecifications.companyEnabled());
-
-        if (keyword != null) {
-            spec = spec.and(SavedJobSpecifications.keyword(keyword));
-        }
-
-
+                .and(SavedJobSpecifications.jobPublishedAndCompanyEnabled())
+                .and(SavedJobSpecifications.keyword(keyword));
 
         Page<SavedJob> page = savedJobRepository.findAll(
                 spec,

@@ -33,3 +33,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local environment and uploads ###
+.env
+uploads/

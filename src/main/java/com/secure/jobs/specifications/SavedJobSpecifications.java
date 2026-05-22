@@ -18,15 +18,17 @@ public class SavedJobSpecifications {
                         : cb.equal(root.get("user").get("userId"), userId);
     }
 
-    public static Specification<SavedJob> jobIsPublished() {
-        return (root, query, cb) ->
-                cb.equal(root.join("job").get("status"), JobStatus.PUBLISHED);
+    public static Specification<SavedJob> jobPublishedAndCompanyEnabled() {
+        return (root, query, cb) -> {
+            var job = root.join("job");
+            var company = job.join("company");
+            return cb.and(
+                    cb.equal(job.get("status"), JobStatus.PUBLISHED),
+                    cb.isTrue(company.get("enabled"))
+            );
+        };
     }
 
-    public static Specification<SavedJob> companyEnabled() {
-        return (root, query, cb) ->
-                cb.isTrue(root.join("job").join("company").get("enabled"));
-    }
 
     // ✅ now this is saved date filtering
     public static Specification<SavedJob> savedBetween(LocalDate from, LocalDate to) {

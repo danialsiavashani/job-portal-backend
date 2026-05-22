@@ -55,11 +55,6 @@ public class UserSavedJobController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PageableDefault(page = 0, size = 10) Pageable pageable,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) EmploymentType employmentType,
-            @RequestParam(required = false) BigDecimal minPay,
-            @RequestParam(required = false) BigDecimal maxPay,
-            @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) String location,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate from,
@@ -76,11 +71,6 @@ public class UserSavedJobController {
                 userDetails.getId(),
                 locked,
                 keyword,
-                location,
-                employmentType,
-                minPay,
-                maxPay,
-                companyId,
                 from,
                 to
         );

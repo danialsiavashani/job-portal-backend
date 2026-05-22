@@ -19,11 +19,6 @@ public interface SavedJobService {
             Long userId,
             Pageable locked,
             String keyword,
-            String location,
-            EmploymentType employmentType,
-            BigDecimal minPay,
-            BigDecimal maxPay,
-            Long companyId,
             LocalDate from,
             LocalDate to);
 
