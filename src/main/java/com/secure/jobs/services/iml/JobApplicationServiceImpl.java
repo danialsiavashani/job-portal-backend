@@ -125,7 +125,7 @@ public class JobApplicationServiceImpl  implements JobApplicationService {
 
     @Override
     public JobApplication updateJobApplicationStatus(Long companyOwnerUserId, Long applicationId, JobApplicationStatus newStatus) {
-        JobApplication application = jobApplicationGuard.requireCompanyOwnedEnabledPendingApplication(applicationId, companyOwnerUserId);
+        JobApplication application = jobApplicationGuard.requireCompanyOwnedEnabledApplication(applicationId, companyOwnerUserId);
 
         JobApplicationStatus current = application.getStatus();
 
