@@ -47,6 +47,7 @@ import java.util.List;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -441,6 +442,73 @@ class CompanyIsolationIT {
                 )
                 .andExpect(status().isNotFound());
     }
+
+    // ── Job DTO validation ────────────────────────────────────────────────────
+
+    @Test
+    void createJob_withBlankTitle_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc BlankTitle");
+        mockMvc.perform(post(BASE_JOB)
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"\",\"description\":\"A description.\",\"employmentType\":\"FULL_TIME\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createJob_withMissingTitle_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc MissingTitle");
+        mockMvc.perform(post(BASE_JOB)
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"A description.\",\"employmentType\":\"FULL_TIME\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createJob_withMissingEmploymentType_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc MissingType");
+        mockMvc.perform(post(BASE_JOB)
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Backend Dev\",\"description\":\"A description.\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createJob_withNegativePayMin_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc NegPay");
+        mockMvc.perform(post(BASE_JOB)
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Backend Dev\",\"description\":\"A description.\","
+                                + "\"employmentType\":\"FULL_TIME\",\"payMin\":-1}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateJob_withEmptyTitle_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc UpdateEmpty");
+        Job job = newJob(ctx.company());
+        mockMvc.perform(put(BASE_JOB + "/" + job.getId())
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateJob_withNegativePayMax_returns400() throws Exception {
+        CompanyCtx ctx = companyCtx("ValidInc UpdateNegPay");
+        Job job = newJob(ctx.company());
+        mockMvc.perform(put(BASE_JOB + "/" + job.getId())
+                        .with(ctx.auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"payMax\":-5}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     @Test
     void companyB_patchInvalidStatus_returns400_andDoesNotChangeStatus() throws Exception {
