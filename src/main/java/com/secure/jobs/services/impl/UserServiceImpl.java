@@ -3,6 +3,7 @@ package com.secure.jobs.services.impl;
 import com.secure.jobs.dto.admin.UpdateUserModerationRequest;
 import com.secure.jobs.dto.admin.UpdateUserModerationResponse;
 import com.secure.jobs.exceptions.ApiException;
+import com.secure.jobs.exceptions.BadRequestException;
 import com.secure.jobs.exceptions.ResourceNotFoundException;
 import com.secure.jobs.mappers.AdminModerationMapper;
 import com.secure.jobs.models.user.auth.PasswordResetToken;
@@ -99,14 +100,14 @@ public class UserServiceImpl implements UserService {
         String tokenHash = ResetTokenUtil.sha256Hex(rawToken);
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new RuntimeException("Invalid password reset token"));
+                .orElseThrow(() -> new BadRequestException("Invalid or expired password reset token"));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Password reset token already used");
+            throw new BadRequestException("Password reset token has already been used");
         }
 
         if (resetToken.isExpired()) {
-            throw new RuntimeException("Password reset token expired");
+            throw new BadRequestException("Password reset token has expired");
         }
 
         User user = resetToken.getUser();
